@@ -1,0 +1,26 @@
+{
+    "name": "openapi",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "lint": "redocly lint openapi.yaml",
+        "serve": "python3 -m http.server"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/uptrace/openapi.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/uptrace/openapi/issues"
+    },
+    "homepage": "https://github.com/uptrace/openapi#readme",
+    "packageManager": "pnpm@10.15.0",
+    "devDependencies": {
+        "@redocly/cli": "^2.14.6"
+    }
+}

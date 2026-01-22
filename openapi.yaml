@@ -1,0 +1,394 @@
+openapi: 3.1.0
+info:
+  title: Uptrace JSON API
+  version: "0.0.0"
+  description: Call the Uptrace JSON API to page through spans, run aggregate queries, and manage alerts or annotations with bearer tokens.
+
+servers:
+  - url: https://api.uptrace.dev
+    description: Public API server
+security:
+  - bearerAuth: []
+  - authTokenQuery: []
+
+paths:
+  /api/v1/tracing/{project_id}/spans:
+    get:
+      summary: List spans
+      operationId: listSpans
+      description: Retrieve a list of spans.
+      tags: [Querying]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeGte"
+        - $ref: "#/components/parameters/TimeLt"
+        - name: trace_id
+          in: query
+          description: Filter spans by trace ID.
+          schema:
+            type: string
+        - name: id
+          in: query
+          description: Filter spans by span ID.
+          schema:
+            type: integer
+        - name: parent_id
+          in: query
+          description: Filter spans by parent span ID.
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: List of spans.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/tracing/{project_id}/groups:
+    get:
+      summary: List groups
+      operationId: listSpanGroups
+      description: Aggregate spans using UQL.
+      tags: [Querying]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeGte"
+        - $ref: "#/components/parameters/TimeLt"
+        - name: query
+          in: query
+          description: Aggregate spans using the specified query.
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Limit"
+        - name: search
+          in: query
+          description: Search for spans containing option1 or option2.
+          schema:
+            type: string
+        - name: duration_gte
+          in: query
+          description: Duration greater than or equal to N (microseconds).
+          schema:
+            type: integer
+            format: int64
+        - name: duration_lt
+          in: query
+          description: Duration less than N (microseconds).
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Aggregated spans.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/projects/{project_id}/monitors:
+    post:
+      summary: Create a monitor
+      operationId: createMonitor
+      description: Create a metric or error monitor.
+      tags: [Monitors]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/MetricMonitorRequest"
+                - $ref: "#/components/schemas/ErrorMonitorRequest"
+      responses:
+        "200":
+          description: Monitor created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /internal/v1/projects/{project_id}/monitors/{monitor_id}:
+    put:
+      summary: Update a monitor
+      operationId: updateMonitor
+      description: Update a metric or error monitor by ID.
+      tags: [Monitors]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MonitorId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/MetricMonitorRequest"
+                - $ref: "#/components/schemas/ErrorMonitorRequest"
+      responses:
+        "200":
+          description: Monitor updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete a monitor
+      operationId: deleteMonitor
+      description: Delete a metric or error monitor by ID.
+      tags: [Monitors]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MonitorId"
+      responses:
+        "200":
+          description: Monitor deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    authTokenQuery:
+      type: apiKey
+      in: query
+      name: auth_token
+    uptraceDSNHeader:
+      type: apiKey
+      in: header
+      name: uptrace-dsn
+    dsnQuery:
+      type: apiKey
+      in: query
+      name: dsn
+
+  parameters:
+    ProjectId:
+      name: project_id
+      in: path
+      required: true
+      description: Uptrace project ID.
+      schema:
+        type: string
+    MonitorId:
+      name: monitor_id
+      in: path
+      required: true
+      description: Monitor ID.
+      schema:
+        type: string
+    TimeGte:
+      name: time_gte
+      in: query
+      required: true
+      description: Time greater than or equal to time_gte.
+      schema:
+        type: string
+        format: date-time
+    TimeLt:
+      name: time_lt
+      in: query
+      required: true
+      description: Time less than time_lt.
+      schema:
+        type: string
+        format: date-time
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Limit number of results.
+      schema:
+        type: integer
+        format: int32
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required: [code, message]
+
+    MonitorResponse:
+      type: object
+      properties:
+        monitor:
+          type: object
+          properties:
+            id:
+              type: string
+          required:
+            - id
+      required:
+        - monitor
+    BaseMonitorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        notifyEveryoneByEmail:
+          type: boolean
+        teamIds:
+          type: array
+          items:
+            type: integer
+        channelIds:
+          type: array
+          items:
+            type: integer
+        repeatInterval:
+          type: object
+          additionalProperties: true
+      required:
+        - name
+    MetricMonitorRequest:
+      allOf:
+        - $ref: "#/components/schemas/BaseMonitorRequest"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - metric
+            params:
+              $ref: "#/components/schemas/MetricMonitorParams"
+          required:
+            - type
+            - params
+    ErrorMonitorRequest:
+      allOf:
+        - $ref: "#/components/schemas/BaseMonitorRequest"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - error
+            params:
+              $ref: "#/components/schemas/ErrorMonitorParams"
+          required:
+            - type
+            - params
+    MetricMonitorParams:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonitorMetric"
+        query:
+          type: string
+        column:
+          type: string
+        minAllowedValue:
+          type: number
+        maxAllowedValue:
+          type: number
+        groupingInterval:
+          type: number
+          description: Grouping interval in milliseconds.
+        checkNumPoint:
+          type: integer
+        nullsMode:
+          type: string
+          enum:
+            - allow
+            - forbid
+            - convert
+        timeOffset:
+          type: number
+          description: Time offset in milliseconds.
+      required:
+        - metrics
+        - query
+        - column
+    ErrorMonitorParams:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonitorMetric"
+        query:
+          type: string
+      required:
+        - metrics
+        - query
+    MonitorMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        alias:
+          type: string
+      required:
+        - name
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
