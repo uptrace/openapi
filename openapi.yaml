@@ -20,6 +20,35 @@ security:
   - authTokenQuery: []
 
 paths:
+  /api/v1/annotations:
+    post:
+      summary: Create annotation
+      operationId: createAnnotation
+      description: Create a chart annotation.
+      tags: [Annotations]
+      security:
+        - uptraceDSNHeader: []
+        - dsnQuery: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnotationCreateRequest"
+            example:
+              name: Deployed to production
+              fingerprint: v1.2.3
+              attrs:
+                service.version: v1.2.3
+      responses:
+        "200":
+          description: Annotation created.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/v1/tracing/{project_id}/spans:
     get:
       summary: List spans
@@ -1013,6 +1042,32 @@ components:
         format: int64
 
   schemas:
+    AnnotationCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Annotation name.
+        description:
+          type: string
+          description: Annotation description text in Markdown format.
+        color:
+          type: string
+          description: Color to be used in charts.
+        attrs:
+          type: object
+          additionalProperties:
+            type: string
+          description: Key-value metadata.
+        fingerprint:
+          type: string
+          description: Unique string used for deduplication.
+        time:
+          type: string
+          format: date-time
+          description: Overrides annotation time in RFC3339 format.
+      required:
+        - name
     Error:
       type: object
       properties:
