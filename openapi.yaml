@@ -140,6 +140,8 @@ paths:
   /internal/v1/projects/{project_id}/monitors:
     get:
       summary: List monitors
+      x-badges:
+        - name: beta
       operationId: listMonitors
       description: Retrieve all monitors for a project.
       tags: [Monitors]
@@ -167,6 +169,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     post:
       summary: Create a monitor
+      x-badges:
+        - name: beta
       operationId: createMonitor
       description: Create a metric or error monitor.
       tags: [Monitors]
@@ -196,6 +200,8 @@ paths:
   /internal/v1/projects/{project_id}/monitors/{monitor_id}:
     get:
       summary: Get a monitor
+      x-badges:
+        - name: beta
       operationId: getMonitor
       description: Retrieve a specific monitor by ID.
       tags: [Monitors]
@@ -219,6 +225,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     put:
       summary: Update a monitor
+      x-badges:
+        - name: beta
       operationId: updateMonitor
       description: Update a metric or error monitor by ID.
       tags: [Monitors]
@@ -250,6 +258,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     delete:
       summary: Delete a monitor
+      x-badges:
+        - name: beta
       operationId: deleteMonitor
       description: Delete a metric or error monitor by ID.
       tags: [Monitors]
@@ -271,6 +281,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards:
     get:
       summary: List dashboards
+      x-badges:
+        - name: beta
       operationId: listDashboards
       description: Retrieve all dashboards for a project.
       tags: [Dashboards]
@@ -300,6 +312,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/yaml:
     post:
       summary: Create dashboard from YAML
+      x-badges:
+        - name: beta
       operationId: createDashboardFromYAML
       description: Create a new dashboard from YAML definition.
       tags: [Dashboards]
@@ -329,6 +343,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}:
     get:
       summary: Get a dashboard
+      x-badges:
+        - name: beta
       operationId: getDashboard
       description: Retrieve a specific dashboard by ID with grid rows and items.
       tags: [Dashboards]
@@ -371,6 +387,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     delete:
       summary: Delete a dashboard
+      x-badges:
+        - name: beta
       operationId: deleteDashboard
       description: Delete a dashboard by ID.
       tags: [Dashboards]
@@ -392,6 +410,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/yaml:
     get:
       summary: Get dashboard YAML
+      x-badges:
+        - name: beta
       operationId: getDashboardYAML
       description: Retrieve the YAML representation of a dashboard.
       tags: [Dashboards]
@@ -415,6 +435,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     put:
       summary: Update dashboard from YAML
+      x-badges:
+        - name: beta
       operationId: updateDashboardFromYAML
       description: Update an existing dashboard from YAML definition.
       tags: [Dashboards]
@@ -447,6 +469,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/clone:
     post:
       summary: Clone a dashboard
+      x-badges:
+        - name: beta
       operationId: cloneDashboard
       description: Create a copy of an existing dashboard.
       tags: [Dashboards]
@@ -472,6 +496,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/reset:
     put:
       summary: Reset a dashboard
+      x-badges:
+        - name: beta
       operationId: resetDashboard
       description: Reset dashboard to template or reset layout.
       tags: [Dashboards]
@@ -493,6 +519,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/pinned:
     put:
       summary: Pin a dashboard
+      x-badges:
+        - name: beta
       operationId: pinDashboard
       description: Pin dashboard to top of dashboard list.
       tags: [Dashboards]
@@ -514,6 +542,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/unpinned:
     put:
       summary: Unpin a dashboard
+      x-badges:
+        - name: beta
       operationId: unpinDashboard
       description: Unpin dashboard from top of dashboard list.
       tags: [Dashboards]
@@ -535,6 +565,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/table:
     put:
       summary: Update dashboard table
+      x-badges:
+        - name: beta
       operationId: updateDashboardTable
       description: Update the table configuration of a dashboard.
       tags: [Dashboards]
@@ -562,6 +594,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/grid:
     put:
       summary: Update dashboard grid query
+      x-badges:
+        - name: beta
       operationId: updateDashboardGrid
       description: Update the global grid query filter for a dashboard.
       tags: [Dashboards]
@@ -590,6 +624,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     post:
       summary: Create grid item
+      x-badges:
+        - name: beta
       operationId: createGridItem
       description: Create a new grid item in the dashboard.
       tags: [Dashboards]
@@ -621,6 +657,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/grid/{grid_item_id}:
     put:
       summary: Update grid item
+      x-badges:
+        - name: beta
       operationId: updateGridItem
       description: Update an existing grid item.
       tags: [Dashboards]
@@ -651,6 +689,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     delete:
       summary: Delete grid item
+      x-badges:
+        - name: beta
       operationId: deleteGridItem
       description: Delete a grid item from the dashboard.
       tags: [Dashboards]
@@ -677,6 +717,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows:
     post:
       summary: Create grid row
+      x-badges:
+        - name: beta
       operationId: createGridRow
       description: Create a new grid row in the dashboard.
       tags: [Dashboards]
@@ -708,6 +750,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}:
     put:
       summary: Update grid row
+      x-badges:
+        - name: beta
       operationId: updateGridRow
       description: Update an existing grid row.
       tags: [Dashboards]
@@ -738,6 +782,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     delete:
       summary: Delete grid row
+      x-badges:
+        - name: beta
       operationId: deleteGridRow
       description: Delete a grid row and all its items.
       tags: [Dashboards]
@@ -760,6 +806,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/up:
     put:
       summary: Move grid row up
+      x-badges:
+        - name: beta
       operationId: moveGridRowUp
       description: Move a grid row up in the dashboard.
       tags: [Dashboards]
@@ -786,6 +834,8 @@ paths:
   /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/down:
     put:
       summary: Move grid row down
+      x-badges:
+        - name: beta
       operationId: moveGridRowDown
       description: Move a grid row down in the dashboard.
       tags: [Dashboards]
@@ -812,6 +862,8 @@ paths:
   /internal/v1/projects/{project_id}/notification-channels:
     get:
       summary: List notification channels
+      x-badges:
+        - name: beta
       operationId: listNotificationChannels
       description: Retrieve all notification channels for a project.
       tags: [NotificationChannels]
@@ -839,6 +891,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     post:
       summary: Create notification channel
+      x-badges:
+        - name: beta
       operationId: createNotificationChannel
       description: Create a new notification channel.
       tags: [NotificationChannels]
@@ -867,6 +921,8 @@ paths:
   /internal/v1/projects/{project_id}/notification-channels/{channel_id}:
     get:
       summary: Get notification channel
+      x-badges:
+        - name: beta
       operationId: getNotificationChannel
       description: Retrieve a specific notification channel by ID.
       tags: [NotificationChannels]
@@ -890,6 +946,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     put:
       summary: Update notification channel
+      x-badges:
+        - name: beta
       operationId: updateNotificationChannel
       description: Update an existing notification channel.
       tags: [NotificationChannels]
@@ -919,6 +977,8 @@ paths:
           $ref: "#/components/responses/InternalError"
     delete:
       summary: Delete notification channel
+      x-badges:
+        - name: beta
       operationId: deleteNotificationChannel
       description: Delete an existing notification channel.
       tags: [NotificationChannels]

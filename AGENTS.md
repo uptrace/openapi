@@ -16,3 +16,4 @@ Guidance for automated agents working in this repository.
 
 - Prefer minimal, precise OpenAPI changes.
 - Keep descriptions aligned with documented behavior.
+- All APIs under `/internal/v1` have beta stability.
