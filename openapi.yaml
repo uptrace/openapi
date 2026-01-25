@@ -1,8 +1,16 @@
 openapi: 3.1.0
 info:
   title: Uptrace JSON API
-  version: "0.0.0"
-  description: Call the Uptrace JSON API to page through spans, run aggregate queries, and manage alerts or annotations with bearer tokens.
+  version: "1.0.0"
+  description: |
+    REST API for managing Uptrace resources including monitors and dashboards.
+    This API allows you to create, update, retrieve, and delete monitors and dashboards programmatically.
+  contact:
+    name: Uptrace
+    url: https://uptrace.dev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: https://api.uptrace.dev
@@ -20,8 +28,8 @@ paths:
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
-        - $ref: "#/components/parameters/TimeGte"
-        - $ref: "#/components/parameters/TimeLt"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
         - name: trace_id
           in: query
           description: Filter spans by trace ID.
@@ -60,8 +68,8 @@ paths:
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
-        - $ref: "#/components/parameters/TimeGte"
-        - $ref: "#/components/parameters/TimeLt"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
         - name: query
           in: query
           description: Aggregate spans using the specified query.
@@ -101,6 +109,33 @@ paths:
           $ref: "#/components/responses/InternalError"
 
   /internal/v1/projects/{project_id}/monitors:
+    get:
+      summary: List monitors
+      operationId: listMonitors
+      description: Retrieve all monitors for a project.
+      tags: [Monitors]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: List of monitors.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - monitors
+                properties:
+                  monitors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Monitor"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
     post:
       summary: Create a monitor
       operationId: createMonitor
@@ -130,6 +165,29 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
   /internal/v1/projects/{project_id}/monitors/{monitor_id}:
+    get:
+      summary: Get a monitor
+      operationId: getMonitor
+      description: Retrieve a specific monitor by ID.
+      tags: [Monitors]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MonitorId"
+      responses:
+        "200":
+          description: Monitor details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
     put:
       summary: Update a monitor
       operationId: updateMonitor
@@ -181,6 +239,679 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/metrics/{project_id}/dashboards:
+    get:
+      summary: List dashboards
+      operationId: listDashboards
+      description: Retrieve all dashboards for a project.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: List of dashboards.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - dashboards
+                properties:
+                  dashboards:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Dashboard"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/yaml:
+    post:
+      summary: Create dashboard from YAML
+      operationId: createDashboardFromYAML
+      description: Create a new dashboard from YAML definition.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          text/yaml:
+            schema:
+              type: string
+              description: YAML dashboard definition.
+      responses:
+        "200":
+          description: Dashboard created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}:
+    get:
+      summary: Get a dashboard
+      operationId: getDashboard
+      description: Retrieve a specific dashboard by ID with grid rows and items.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      responses:
+        "200":
+          description: Dashboard details.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - dashboard
+                properties:
+                  dashboard:
+                    $ref: "#/components/schemas/Dashboard"
+                  tableItems:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GridItem"
+                  gridRows:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GridRow"
+                  gridMetrics:
+                    type: array
+                    items:
+                      type: string
+                  yamlUrl:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete a dashboard
+      operationId: deleteDashboard
+      description: Delete a dashboard by ID.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      responses:
+        "200":
+          description: Dashboard deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/yaml:
+    get:
+      summary: Get dashboard YAML
+      operationId: getDashboardYAML
+      description: Retrieve the YAML representation of a dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      responses:
+        "200":
+          description: Dashboard YAML.
+          content:
+            text/yaml:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      summary: Update dashboard from YAML
+      operationId: updateDashboardFromYAML
+      description: Update an existing dashboard from YAML definition.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      requestBody:
+        required: true
+        content:
+          text/yaml:
+            schema:
+              type: string
+              description: YAML dashboard definition.
+      responses:
+        "200":
+          description: Dashboard updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/clone:
+    post:
+      summary: Clone a dashboard
+      operationId: cloneDashboard
+      description: Create a copy of an existing dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      responses:
+        "200":
+          description: Dashboard cloned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/reset:
+    put:
+      summary: Reset a dashboard
+      operationId: resetDashboard
+      description: Reset dashboard to template or reset layout.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      responses:
+        "200":
+          description: Dashboard reset.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/pinned:
+    put:
+      summary: Pin a dashboard
+      operationId: pinDashboard
+      description: Pin dashboard to top of dashboard list.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      responses:
+        "200":
+          description: Dashboard pinned.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/unpinned:
+    put:
+      summary: Unpin a dashboard
+      operationId: unpinDashboard
+      description: Unpin dashboard from top of dashboard list.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      responses:
+        "200":
+          description: Dashboard unpinned.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/table:
+    put:
+      summary: Update dashboard table
+      operationId: updateDashboardTable
+      description: Update the table configuration of a dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardTableUpdate"
+      responses:
+        "200":
+          description: Dashboard table updated.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/grid:
+    put:
+      summary: Update dashboard grid query
+      operationId: updateDashboardGrid
+      description: Update the global grid query filter for a dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gridQuery:
+                  type: string
+      responses:
+        "200":
+          description: Dashboard grid query updated.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      summary: Create grid item
+      operationId: createGridItem
+      description: Create a new grid item in the dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GridItem"
+      responses:
+        "200":
+          description: Grid item created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GridItemResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/grid/{grid_item_id}:
+    put:
+      summary: Update grid item
+      operationId: updateGridItem
+      description: Update an existing grid item.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+        - $ref: "#/components/parameters/GridItemId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GridItem"
+      responses:
+        "200":
+          description: Grid item updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GridItemResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete grid item
+      operationId: deleteGridItem
+      description: Delete a grid item from the dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+        - $ref: "#/components/parameters/GridItemId"
+      responses:
+        "200":
+          description: Grid item deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GridItemResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/rows:
+    post:
+      summary: Create grid row
+      operationId: createGridRow
+      description: Create a new grid row in the dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GridRowRequest"
+      responses:
+        "200":
+          description: Grid row created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GridRowResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/rows/{row_id}:
+    put:
+      summary: Update grid row
+      operationId: updateGridRow
+      description: Update an existing grid row.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+        - $ref: "#/components/parameters/RowId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GridRow"
+      responses:
+        "200":
+          description: Grid row updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GridRowResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete grid row
+      operationId: deleteGridRow
+      description: Delete a grid row and all its items.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+        - $ref: "#/components/parameters/RowId"
+      responses:
+        "200":
+          description: Grid row deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/up:
+    put:
+      summary: Move grid row up
+      operationId: moveGridRowUp
+      description: Move a grid row up in the dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+        - $ref: "#/components/parameters/RowId"
+      responses:
+        "200":
+          description: Grid row moved up.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GridRowResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/down:
+    put:
+      summary: Move grid row down
+      operationId: moveGridRowDown
+      description: Move a grid row down in the dashboard.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DashboardId"
+        - $ref: "#/components/parameters/RowId"
+      responses:
+        "200":
+          description: Grid row moved down.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GridRowResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/projects/{project_id}/notification-channels:
+    get:
+      summary: List notification channels
+      operationId: listNotificationChannels
+      description: Retrieve all notification channels for a project.
+      tags: [NotificationChannels]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: List of notification channels.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - channels
+                properties:
+                  channels:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NotificationChannel"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      summary: Create notification channel
+      operationId: createNotificationChannel
+      description: Create a new notification channel.
+      tags: [NotificationChannels]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationChannelRequest"
+      responses:
+        "200":
+          description: Notification channel created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/projects/{project_id}/notification-channels/{channel_id}:
+    get:
+      summary: Get notification channel
+      operationId: getNotificationChannel
+      description: Retrieve a specific notification channel by ID.
+      tags: [NotificationChannels]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/ChannelId"
+      responses:
+        "200":
+          description: Notification channel details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      summary: Update notification channel
+      operationId: updateNotificationChannel
+      description: Update an existing notification channel.
+      tags: [NotificationChannels]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/ChannelId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationChannelRequest"
+      responses:
+        "200":
+          description: Notification channel updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete notification channel
+      operationId: deleteNotificationChannel
+      description: Delete an existing notification channel.
+      tags: [NotificationChannels]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/ChannelId"
+      responses:
+        "200":
+          description: Notification channel deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -213,23 +944,32 @@ components:
       required: true
       description: Monitor ID.
       schema:
-        type: string
-    TimeGte:
-      name: time_gte
+        type: integer
+        format: int64
+    TimeStart:
+      name: time_start
       in: query
       required: true
-      description: Time greater than or equal to time_gte.
+      description: Start time as unix milliseconds or RFC3339 timestamp.
       schema:
-        type: string
-        format: date-time
-    TimeLt:
-      name: time_lt
+        oneOf:
+          - type: number
+            description: Unix time in milliseconds.
+          - type: string
+            format: date-time
+            description: RFC3339 timestamp.
+    TimeEnd:
+      name: time_end
       in: query
       required: true
-      description: Time less than time_lt.
+      description: End time as unix milliseconds or RFC3339 timestamp.
       schema:
-        type: string
-        format: date-time
+        oneOf:
+          - type: number
+            description: Unix time in milliseconds.
+          - type: string
+            format: date-time
+            description: RFC3339 timestamp.
     Limit:
       name: limit
       in: query
@@ -238,6 +978,38 @@ components:
       schema:
         type: integer
         format: int32
+    DashboardId:
+      name: dashboard_id
+      in: path
+      required: true
+      description: Dashboard ID.
+      schema:
+        type: integer
+        format: int64
+    ChannelId:
+      name: channel_id
+      in: path
+      required: true
+      description: Notification channel ID.
+      schema:
+        type: integer
+        format: int64
+    GridItemId:
+      name: grid_item_id
+      in: path
+      required: true
+      description: Grid item ID.
+      schema:
+        type: integer
+        format: int64
+    RowId:
+      name: row_id
+      in: path
+      required: true
+      description: Grid row ID.
+      schema:
+        type: integer
+        format: int64
 
   schemas:
     Error:
@@ -253,12 +1025,7 @@ components:
       type: object
       properties:
         monitor:
-          type: object
-          properties:
-            id:
-              type: string
-          required:
-            - id
+          $ref: "#/components/schemas/Monitor"
       required:
         - monitor
     BaseMonitorRequest:
@@ -363,6 +1130,313 @@ components:
           type: string
       required:
         - name
+
+    Monitor:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+          enum: [metric, error]
+        state:
+          type: string
+          enum: [open, firing, paused]
+        notifyEveryoneByEmail:
+          type: boolean
+        teamIds:
+          type: array
+          items:
+            type: integer
+        channelIds:
+          type: array
+          items:
+            type: integer
+        repeatInterval:
+          type: object
+          additionalProperties: true
+        params:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - id
+        - name
+        - type
+        - state
+
+    Dashboard:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        projectId:
+          type: integer
+          format: int64
+        templateId:
+          type: string
+        name:
+          type: string
+        pinned:
+          type: boolean
+        minInterval:
+          type: number
+        timeOffset:
+          type: number
+        gridQuery:
+          type: string
+        gridMaxWidth:
+          type: integer
+        tableMetrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricAlias"
+        tableQuery:
+          type: string
+        tableGrouping:
+          type: array
+          items:
+            type: string
+        tableColumnMap:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/TableColumn"
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - id
+        - projectId
+        - name
+
+    DashboardResponse:
+      type: object
+      properties:
+        dashboard:
+          $ref: "#/components/schemas/Dashboard"
+      required:
+        - dashboard
+
+    DashboardTableUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        tableMetrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricAlias"
+        tableQuery:
+          type: string
+        tableColumnMap:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/TableColumn"
+
+    MetricAlias:
+      type: object
+      properties:
+        name:
+          type: string
+        alias:
+          type: string
+      required:
+        - name
+        - alias
+
+    TableColumn:
+      type: object
+      properties:
+        unit:
+          type: string
+        color:
+          type: string
+        aggFunc:
+          type: string
+          enum: [min, max, sum, avg, avg_zero, median, last]
+        sparklineDisabled:
+          type: boolean
+
+    GridRow:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        dashId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+        expanded:
+          type: boolean
+        index:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GridItem"
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - id
+        - dashId
+        - title
+        - index
+
+    GridRowRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        expanded:
+          type: boolean
+
+    GridRowResponse:
+      type: object
+      properties:
+        gridRow:
+          $ref: "#/components/schemas/GridRow"
+      required:
+        - gridRow
+
+    GridItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        dashId:
+          type: integer
+          format: int64
+        dashKind:
+          type: string
+          enum: [grid, table]
+        rowId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        xAxis:
+          type: integer
+        yAxis:
+          type: integer
+        type:
+          type: string
+          enum: [chart, table, heatmap, gauge]
+        params:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - id
+        - dashId
+        - dashKind
+        - type
+        - title
+
+    GridItemResponse:
+      type: object
+      properties:
+        gridItem:
+          $ref: "#/components/schemas/GridItem"
+      required:
+        - gridItem
+
+    NotificationChannel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        projectId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+          enum: [slack, webhook, telegram, mattermost]
+        status:
+          type: string
+        condition:
+          type: string
+        priority:
+          type: array
+          items:
+            type: string
+            enum: [Info, Low, Medium, High]
+        params:
+          type: object
+          additionalProperties: true
+        monitorIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        monitorCount:
+          type: integer
+      required:
+        - id
+        - projectId
+        - name
+        - type
+        - status
+        - params
+
+    NotificationChannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [slack, webhook, telegram, mattermost]
+        condition:
+          type: string
+        priority:
+          type: array
+          items:
+            type: string
+            enum: [Info, Low, Medium, High]
+        params:
+          type: object
+          additionalProperties: true
+      required:
+        - name
+        - type
+        - params
+
+    NotificationChannelResponse:
+      type: object
+      properties:
+        channel:
+          $ref: "#/components/schemas/NotificationChannel"
+      required:
+        - channel
 
   responses:
     BadRequest:
