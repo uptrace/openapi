@@ -1616,8 +1616,7 @@ components:
           items:
             type: integer
         repeatInterval:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/RepeatInterval"
       required:
         - name
     MetricMonitorRequest:
@@ -1703,6 +1702,69 @@ components:
       required:
         - name
 
+    RepeatInterval:
+      type: object
+      description: Monitor repeat interval configuration.
+      oneOf:
+        - $ref: "#/components/schemas/DefaultRepeatInterval"
+        - $ref: "#/components/schemas/FixedRepeatInterval"
+        - $ref: "#/components/schemas/LinearRepeatInterval"
+        - $ref: "#/components/schemas/ExponentialRepeatInterval"
+
+    DefaultRepeatInterval:
+      type: object
+      properties:
+        strategy:
+          type: string
+          enum: [default]
+
+    FixedRepeatInterval:
+      type: object
+      properties:
+        strategy:
+          type: string
+          enum: [fixed]
+        interval:
+          type: number
+          description: Fixed interval in milliseconds.
+      required:
+        - strategy
+        - interval
+
+    LinearRepeatInterval:
+      type: object
+      properties:
+        strategy:
+          type: string
+          enum: [linear]
+        min:
+          type: number
+          description: Minimum interval in milliseconds.
+        max:
+          type: number
+          description: Maximum interval in milliseconds.
+      required:
+        - strategy
+        - min
+        - max
+
+    ExponentialRepeatInterval:
+      type: object
+      properties:
+        strategy:
+          type: string
+          enum: [exponential]
+        min:
+          type: number
+          description: Minimum interval in milliseconds.
+        max:
+          type: number
+          description: Maximum interval in milliseconds.
+      required:
+        - strategy
+        - min
+        - max
+
     Monitor:
       type: object
       properties:
@@ -1728,8 +1790,7 @@ components:
           items:
             type: integer
         repeatInterval:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/RepeatInterval"
         params:
           type: object
           additionalProperties: true
