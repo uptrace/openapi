@@ -239,7 +239,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards:
+  /internal/v1/projects/{project_id}/dashboards:
     get:
       summary: List dashboards
       operationId: listDashboards
@@ -268,7 +268,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/yaml:
+  /internal/v1/projects/{project_id}/dashboards/yaml:
     post:
       summary: Create dashboard from YAML
       operationId: createDashboardFromYAML
@@ -297,7 +297,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}:
     get:
       summary: Get a dashboard
       operationId: getDashboard
@@ -360,7 +360,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/yaml:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/yaml:
     get:
       summary: Get dashboard YAML
       operationId: getDashboardYAML
@@ -415,7 +415,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/clone:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/clone:
     post:
       summary: Clone a dashboard
       operationId: cloneDashboard
@@ -440,7 +440,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/reset:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/reset:
     put:
       summary: Reset a dashboard
       operationId: resetDashboard
@@ -461,7 +461,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/pinned:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/pinned:
     put:
       summary: Pin a dashboard
       operationId: pinDashboard
@@ -482,7 +482,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/unpinned:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/unpinned:
     put:
       summary: Unpin a dashboard
       operationId: unpinDashboard
@@ -503,7 +503,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/table:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/table:
     put:
       summary: Update dashboard table
       operationId: updateDashboardTable
@@ -530,7 +530,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/grid:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/grid:
     put:
       summary: Update dashboard grid query
       operationId: updateDashboardGrid
@@ -589,7 +589,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/grid/{grid_item_id}:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/grid/{grid_item_id}:
     put:
       summary: Update grid item
       operationId: updateGridItem
@@ -645,7 +645,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/rows:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows:
     post:
       summary: Create grid row
       operationId: createGridRow
@@ -676,7 +676,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/rows/{row_id}:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}:
     put:
       summary: Update grid row
       operationId: updateGridRow
@@ -728,7 +728,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/up:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/up:
     put:
       summary: Move grid row up
       operationId: moveGridRowUp
@@ -754,7 +754,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/down:
+  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/down:
     put:
       summary: Move grid row down
       operationId: moveGridRowDown
