@@ -64,16 +64,19 @@ paths:
           description: Filter spans by trace ID.
           schema:
             type: string
+          example: 17706d68ea23cf9bc8976ca57d22ee31
         - name: id
           in: query
           description: Filter spans by span ID.
           schema:
             type: integer
+          example: 12345
         - name: parent_id
           in: query
           description: Filter spans by parent span ID.
           schema:
             type: integer
+          example: 12345
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
@@ -83,6 +86,15 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+              example:
+                spans:
+                  - id: 12345
+                    traceId: 17706d68ea23cf9bc8976ca57d22ee31
+                    parentId: 0
+                    name: GET /api/v1/orders
+                    kind: server
+                    time: 2023-07-10T00:00:01Z
+                    duration: 1200
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -104,24 +116,28 @@ paths:
           description: Aggregate spans using the specified query.
           schema:
             type: string
+          example: group by host_name
         - $ref: "#/components/parameters/Limit"
         - name: search
           in: query
           description: Search for spans containing option1 or option2.
           schema:
             type: string
+          example: option1|option2
         - name: duration_gte
           in: query
           description: Duration greater than or equal to N (microseconds).
           schema:
             type: integer
             format: int64
+          example: 10000
         - name: duration_lt
           in: query
           description: Duration less than N (microseconds).
           schema:
             type: integer
             format: int64
+          example: 100000
       responses:
         "200":
           description: Aggregated spans.
@@ -130,6 +146,13 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+              example:
+                groups:
+                  - group: host-1
+                    spans: 1240
+                    errors: 12
+                    p50: 850
+                    p95: 2400
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -184,6 +207,41 @@ paths:
               oneOf:
                 - $ref: "#/components/schemas/MetricMonitorRequest"
                 - $ref: "#/components/schemas/ErrorMonitorRequest"
+            examples:
+              metricMonitor:
+                summary: Metric monitor
+                value:
+                  name: Number of spans per minute
+                  type: metric
+                  notifyEveryoneByEmail: true
+                  teamIds: [123]
+                  channelIds: [123]
+                  repeatInterval:
+                    strategy: default
+                  params:
+                    metrics:
+                      - name: uptrace_tracing_spans
+                        alias: $spans
+                    query: "perMin(count($spans)) as spans | where service_name = 'myservice'"
+                    column: spans
+                    minAllowedValue: 100
+                    maxAllowedValue: 1000
+                    nullsMode: convert
+              errorMonitor:
+                summary: Error monitor
+                value:
+                  name: Number of spans per minute
+                  type: error
+                  notifyEveryoneByEmail: true
+                  teamIds: [123]
+                  channelIds: [123]
+                  repeatInterval:
+                    strategy: default
+                  params:
+                    metrics:
+                      - name: uptrace_tracing_logs
+                        alias: $logs
+                    query: "group by _group_id | where _system in ('log:error', 'log:fatal')"
       responses:
         "200":
           description: Monitor created.
@@ -191,6 +249,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MonitorResponse"
+              example:
+                monitor:
+                  id: 3807
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -241,6 +302,41 @@ paths:
               oneOf:
                 - $ref: "#/components/schemas/MetricMonitorRequest"
                 - $ref: "#/components/schemas/ErrorMonitorRequest"
+            examples:
+              metricMonitor:
+                summary: Metric monitor
+                value:
+                  name: Number of spans per minute
+                  type: metric
+                  notifyEveryoneByEmail: true
+                  teamIds: [123]
+                  channelIds: [123]
+                  repeatInterval:
+                    strategy: default
+                  params:
+                    metrics:
+                      - name: uptrace_tracing_spans
+                        alias: $spans
+                    query: "perMin(count($spans)) as spans | where service_name = 'myservice'"
+                    column: spans
+                    minAllowedValue: 100
+                    maxAllowedValue: 1000
+                    nullsMode: convert
+              errorMonitor:
+                summary: Error monitor
+                value:
+                  name: Number of spans per minute
+                  type: error
+                  notifyEveryoneByEmail: true
+                  teamIds: [123]
+                  channelIds: [123]
+                  repeatInterval:
+                    strategy: default
+                  params:
+                    metrics:
+                      - name: uptrace_tracing_logs
+                        alias: $logs
+                    query: "group by _group_id | where _system in ('log:error', 'log:fatal')"
       responses:
         "200":
           description: Monitor updated.
@@ -248,6 +344,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MonitorResponse"
+              example:
+                monitor:
+                  id: 3807
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1048,6 +1147,7 @@ components:
           - type: string
             format: date-time
             description: RFC3339 timestamp.
+      example: 2023-07-10T00:00:00Z
     TimeEnd:
       name: time_end
       in: query
@@ -1060,6 +1160,7 @@ components:
           - type: string
             format: date-time
             description: RFC3339 timestamp.
+      example: 2023-07-11T00:00:00Z
     Limit:
       name: limit
       in: query
@@ -1068,6 +1169,7 @@ components:
       schema:
         type: integer
         format: int32
+      example: 10000
     DashboardId:
       name: dashboard_id
       in: path
