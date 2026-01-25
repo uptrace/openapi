@@ -572,7 +572,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GridItem"
+              $ref: "#/components/schemas/GridItemRequest"
       responses:
         "200":
           description: Grid item created.
@@ -604,7 +604,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GridItem"
+              $ref: "#/components/schemas/GridItemRequest"
       responses:
         "200":
           description: Grid item updated.
@@ -1320,6 +1320,10 @@ components:
         id:
           type: integer
           format: int64
+        title:
+          type: string
+        description:
+          type: string
         dashId:
           type: integer
           format: int64
@@ -1329,10 +1333,6 @@ components:
         rowId:
           type: integer
           format: int64
-        title:
-          type: string
-        description:
-          type: string
         width:
           type: integer
         height:
@@ -1353,10 +1353,42 @@ components:
           type: number
       required:
         - id
+        - title
         - dashId
         - dashKind
         - type
+
+    GridItemRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        dashKind:
+          type: string
+          enum: [grid, table]
+        rowId:
+          type: integer
+          format: int64
+        width:
+          type: integer
+        height:
+          type: integer
+        xAxis:
+          type: integer
+        yAxis:
+          type: integer
+        type:
+          type: string
+          enum: [chart, table, heatmap, gauge]
+        params:
+          type: object
+          additionalProperties: true
+      required:
         - title
+        - dashKind
+        - type
 
     GridItemResponse:
       type: object
