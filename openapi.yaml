@@ -5,6 +5,24 @@ info:
   description: |
     REST API for managing Uptrace resources including monitors and dashboards.
     This API allows you to create, update, retrieve, and delete monitors and dashboards programmatically.
+
+    ## Authentication
+
+    To use the API, you need a project ID (`<project_id>`) and a user authentication token (`<user_token>`).
+
+    You can create an authentication token on your user profile page. The token has the same permissions as the user account, allowing access to the same resources.
+
+    ### SSO
+
+    User auth tokens do not work with Single Sign-On (SSO) because SSO requires Uptrace to redirect users to the SSO provider, which is not viable for the JSON API.
+
+    If your organization uses SSO, you need to create a separate user account and statically grant it access to projects without relying on SSO authentication.
+
+    ## Usage Limits
+
+    Uptrace Cloud provides this API free of charge for occasional use to read small fractions of ingested data. For example, a few requests per hour to read data from the last few hours is acceptable.
+
+    If you need higher usage limits, please contact [support](mailto:support@uptrace.dev) to discuss your use case.
   contact:
     name: Uptrace
     url: https://uptrace.dev
