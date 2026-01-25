@@ -937,7 +937,8 @@ components:
       required: true
       description: Uptrace project ID.
       schema:
-        type: string
+        type: integer
+        format: int64
     MonitorId:
       name: monitor_id
       in: path
@@ -1305,6 +1306,8 @@ components:
           type: string
         expanded:
           type: boolean
+      required:
+        - title
 
     GridRowResponse:
       type: object
@@ -1388,6 +1391,7 @@ components:
       required:
         - title
         - dashKind
+        - rowId
         - type
 
     GridItemResponse:
