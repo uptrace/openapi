@@ -47,6 +47,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
   /api/v1/tracing/{project_id}/spans:
@@ -99,6 +101,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
   /api/v1/tracing/{project_id}/groups:
@@ -157,6 +161,83 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/data/seed:
+    put:
+      summary: Seed data fixtures
+      operationId: seedDataFixtures
+      description:
+        Create, update, or delete users, orgs, projects, and related resources
+        using fixture keys.
+      tags: [Fixtures]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeedDataRequest"
+            example:
+              users:
+                - key: admin_user
+                  name: System Administrator
+                  email: admin@company.com
+                  password: change_me_immediately
+              orgs:
+                - key: main_org
+                  name: Acme Corporation
+              orgUsers:
+                - key: admin_membership
+                  orgKey: main_org
+                  userKey: admin_user
+                  role: owner
+              projects:
+                - key: web_app_project
+                  name: Web Application
+                  orgKey: main_org
+      responses:
+        "200":
+          description: Fixtures applied successfully.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/data/link:
+    put:
+      summary: Link existing resources to fixture keys
+      operationId: linkFixtureKeys
+      description: Assign fixture keys to existing resources created outside of fixtures.
+      tags: [Fixtures]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkDataRequest"
+            example:
+              orgs:
+                - id: 123
+                  key: legacy_org
+              projects:
+                - id: 456
+                  key: existing_project
+      responses:
+        "200":
+          description: Links applied successfully.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -188,6 +269,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
     post:
@@ -222,7 +305,9 @@ paths:
                     metrics:
                       - name: uptrace_tracing_spans
                         alias: $spans
-                    query: "perMin(count($spans)) as spans | where service_name = 'myservice'"
+                    query:
+                      "perMin(count($spans)) as spans | where service_name =
+                      'myservice'"
                     column: spans
                     minAllowedValue: 100
                     maxAllowedValue: 1000
@@ -256,6 +341,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
   /internal/v1/projects/{project_id}/monitors/{monitor_id}:
@@ -280,6 +367,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -317,7 +406,9 @@ paths:
                     metrics:
                       - name: uptrace_tracing_spans
                         alias: $spans
-                    query: "perMin(count($spans)) as spans | where service_name = 'myservice'"
+                    query:
+                      "perMin(count($spans)) as spans | where service_name =
+                      'myservice'"
                     column: spans
                     minAllowedValue: 100
                     maxAllowedValue: 1000
@@ -351,6 +442,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -372,6 +465,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -405,6 +500,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -436,6 +533,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -480,6 +579,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -501,6 +602,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -528,6 +631,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -560,6 +665,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -587,6 +694,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -610,6 +719,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -633,6 +744,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -656,6 +769,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -685,6 +800,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -717,6 +834,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -748,6 +867,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -782,6 +903,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -808,6 +931,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -841,6 +966,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -875,6 +1002,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -897,6 +1026,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -925,6 +1056,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -953,6 +1086,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -986,6 +1121,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
     post:
@@ -1014,6 +1151,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -1039,6 +1178,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -1070,6 +1211,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -1095,6 +1238,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -1238,6 +1383,209 @@ components:
         message:
           type: string
       required: [code, message]
+
+    SeedDataRequest:
+      type: object
+      description: Fixture data used to create, update, or delete resources by key.
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserFixture"
+        userTokens:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserTokenFixture"
+        orgs:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrgFixture"
+        orgUsers:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrgUserFixture"
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectFixture"
+        projectTokens:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectTokenFixture"
+        projectUsers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectUserFixture"
+
+    LinkDataRequest:
+      type: object
+      description: Links existing resources to fixture keys.
+      properties:
+        orgs:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinkFixture"
+        orgUsers:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinkFixture"
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinkFixture"
+        projectTokens:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinkFixture"
+
+    UserFixture:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Unique fixture key.
+        name:
+          type: string
+          description: Display name.
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          description: Plain-text password (hashed by Uptrace).
+      required:
+        - key
+        - name
+        - email
+        - password
+
+    UserTokenFixture:
+      type: object
+      properties:
+        key:
+          type: string
+        userKey:
+          type: string
+          description: References users.key.
+        token:
+          type: string
+        name:
+          type: string
+          description: Human-readable token name.
+      required:
+        - key
+        - userKey
+        - token
+
+    OrgFixture:
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - key
+        - name
+
+    OrgUserFixture:
+      type: object
+      properties:
+        key:
+          type: string
+        orgKey:
+          type: string
+          description: References orgs.key.
+        userKey:
+          type: string
+          description: References users.key.
+        role:
+          type: string
+          enum:
+            - owner
+            - admin
+            - viewer
+            - member
+            - collaborator
+            - billing_manager
+            - billing-manager
+      required:
+        - key
+        - orgKey
+        - userKey
+        - role
+
+    ProjectFixture:
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        orgKey:
+          type: string
+          description: References orgs.key.
+        description:
+          type: string
+      required:
+        - key
+        - name
+        - orgKey
+
+    ProjectTokenFixture:
+      type: object
+      properties:
+        key:
+          type: string
+        projectKey:
+          type: string
+          description: References projects.key.
+        token:
+          type: string
+        name:
+          type: string
+      required:
+        - key
+        - projectKey
+        - token
+
+    ProjectUserFixture:
+      type: object
+      properties:
+        key:
+          type: string
+        projectKey:
+          type: string
+          description: References projects.key.
+        orgUserKey:
+          type: string
+          description: References orgUsers.key.
+        permLevel:
+          type: string
+          enum:
+            - admin
+            - maintain
+            - view
+            - none
+      required:
+        - key
+        - projectKey
+        - orgUserKey
+        - permLevel
+
+    LinkFixture:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        key:
+          type: string
+      required:
+        - id
+        - key
 
     MonitorResponse:
       type: object
@@ -1701,6 +2049,13 @@ components:
 
     Unauthorized:
       description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Forbidden:
+      description: Insufficient permissions
       content:
         application/json:
           schema:
