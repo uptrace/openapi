@@ -2080,6 +2080,128 @@ components:
       required:
         - gridItem
 
+    SlackParams:
+      type: object
+      description: Slack params. When authMethod=webhook, webhookUrl is required. When authMethod=token, token and channel are required.
+      properties:
+        webhookUrl:
+          type: string
+        token:
+          type: string
+        channel:
+          type: string
+        authMethod:
+          type: string
+          enum: [webhook, token]
+
+    GoogleChatParams:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+      required:
+        - webhookUrl
+
+    MattermostParams:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+      required:
+        - webhookUrl
+
+    PagerdutyParams:
+      type: object
+      properties:
+        routingKey:
+          type: string
+        severity:
+          type: string
+          enum: [critical, error, warning, info]
+      required:
+        - routingKey
+        - severity
+
+    ServicenowParams:
+      type: object
+      properties:
+        url:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        category:
+          type: string
+        subcategory:
+          type: string
+        impact:
+          type: string
+          enum: ["1", "2", "3"]
+        urgency:
+          type: string
+          enum: ["1", "2", "3"]
+        severity:
+          type: string
+          enum: ["1", "2", "3", "4", "5"]
+        callerId:
+          type: string
+        group:
+          type: string
+        assignedTo:
+          type: string
+        openedBy:
+          type: string
+        notify:
+          type: string
+          enum: ["1", "2"]
+        dueDate:
+          type: string
+      required:
+        - url
+        - username
+        - password
+
+    OpsgenieParams:
+      type: object
+      properties:
+        apiKey:
+          type: string
+        priority:
+          type: string
+          enum: [P1, P2, P3, P4, P5]
+      required:
+        - apiKey
+        - priority
+
+    TelegramParams:
+      type: object
+      properties:
+        chatId:
+          type: integer
+          format: int64
+      required:
+        - chatId
+
+    TeamsParams:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+      required:
+        - webhookUrl
+
+    WebhookParams:
+      type: object
+      properties:
+        url:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+      required:
+        - url
+
     NotificationChannel:
       type: object
       properties:
@@ -2093,19 +2215,44 @@ components:
           type: string
         type:
           type: string
-          enum: [slack, webhook, telegram, mattermost]
+          enum:
+            [
+              slack,
+              google_chat,
+              mattermost,
+              pagerduty,
+              servicenow,
+              opsgenie,
+              telegram,
+              teams,
+              webhook,
+              alertmanager,
+            ]
         status:
           type: string
+          enum: [draft, delivering, paused, disabled]
+        error:
+          type: string
+        matchAll:
+          type: boolean
         condition:
           type: string
-        priority:
+        priorities:
           type: array
           items:
             type: string
-            enum: [Info, Low, Medium, High]
+            enum: [info, low, medium, high]
         params:
-          type: object
-          additionalProperties: true
+          oneOf:
+            - $ref: "#/components/schemas/SlackParams"
+            - $ref: "#/components/schemas/GoogleChatParams"
+            - $ref: "#/components/schemas/MattermostParams"
+            - $ref: "#/components/schemas/PagerdutyParams"
+            - $ref: "#/components/schemas/ServicenowParams"
+            - $ref: "#/components/schemas/OpsgenieParams"
+            - $ref: "#/components/schemas/TelegramParams"
+            - $ref: "#/components/schemas/TeamsParams"
+            - $ref: "#/components/schemas/WebhookParams"
         monitorIds:
           type: array
           items:
@@ -2113,6 +2260,11 @@ components:
             format: int64
         monitorCount:
           type: integer
+        sentCount:
+          type: integer
+        lastSentAt:
+          type: string
+          format: date-time
       required:
         - id
         - projectId
@@ -2128,20 +2280,48 @@ components:
           type: string
         type:
           type: string
-          enum: [slack, webhook, telegram, mattermost]
+          enum:
+            [
+              slack,
+              google_chat,
+              mattermost,
+              pagerduty,
+              servicenow,
+              opsgenie,
+              telegram,
+              teams,
+              webhook,
+              alertmanager,
+            ]
+        matchAll:
+          type: boolean
+        monitorIds:
+          type: array
+          items:
+            type: integer
+            format: int64
         condition:
           type: string
-        priority:
+        priorities:
           type: array
           items:
             type: string
-            enum: [Info, Low, Medium, High]
+            enum: [info, low, medium, high]
         params:
-          type: object
-          additionalProperties: true
+          oneOf:
+            - $ref: "#/components/schemas/SlackParams"
+            - $ref: "#/components/schemas/GoogleChatParams"
+            - $ref: "#/components/schemas/MattermostParams"
+            - $ref: "#/components/schemas/PagerdutyParams"
+            - $ref: "#/components/schemas/ServicenowParams"
+            - $ref: "#/components/schemas/OpsgenieParams"
+            - $ref: "#/components/schemas/TelegramParams"
+            - $ref: "#/components/schemas/TeamsParams"
+            - $ref: "#/components/schemas/WebhookParams"
       required:
         - name
         - type
+        - priorities
         - params
 
     NotificationChannelResponse:
