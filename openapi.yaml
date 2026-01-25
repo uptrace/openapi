@@ -337,6 +337,9 @@ paths:
               example:
                 monitor:
                   id: 3807
+                  name: Number of spans per minute
+                  type: metric
+                  status: active
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -438,6 +441,9 @@ paths:
               example:
                 monitor:
                   id: 3807
+                  name: Number of spans per minute
+                  type: metric
+                  status: active
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1708,9 +1714,9 @@ components:
         type:
           type: string
           enum: [metric, error]
-        state:
+        status:
           type: string
-          enum: [open, firing, paused]
+          enum: [active, paused, firing, no_data, disabled]
         notifyEveryoneByEmail:
           type: boolean
         teamIds:
@@ -1735,7 +1741,7 @@ components:
         - id
         - name
         - type
-        - state
+        - status
 
     Dashboard:
       type: object
