@@ -308,7 +308,7 @@ paths:
                     query:
                       "perMin(count($spans)) as spans | where service_name =
                       'myservice'"
-                    column: spans
+                    columnName: spans
                     minAllowedValue: 100
                     maxAllowedValue: 1000
                     nullsMode: convert
@@ -412,7 +412,7 @@ paths:
                     query:
                       "perMin(count($spans)) as spans | where service_name =
                       'myservice'"
-                    column: spans
+                    columnName: spans
                     minAllowedValue: 100
                     maxAllowedValue: 1000
                     nullsMode: convert
@@ -1656,17 +1656,39 @@ components:
             $ref: "#/components/schemas/MonitorMetric"
         query:
           type: string
-        column:
+        columnName:
           type: string
+        columnUnit:
+          type: string
+        boundsSource:
+          type: string
+          enum:
+            - manual
+            - auto
+        resolution:
+          type: number
+          description: Resolution in milliseconds.
+        numEvalPoints:
+          type: integer
         minAllowedValue:
           type: number
         maxAllowedValue:
           type: number
-        groupingInterval:
+        flapping:
+          $ref: "#/components/schemas/FlappingParams"
+        tolerance:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+        trainingPeriod:
           type: number
-          description: Grouping interval in milliseconds.
-        checkNumPoint:
-          type: integer
+          description: Training period in milliseconds.
+        minDevFraction:
+          type: number
+        minDevValue:
+          type: number
         nullsMode:
           type: string
           enum:
@@ -1679,7 +1701,6 @@ components:
       required:
         - metrics
         - query
-        - column
     ErrorMonitorParams:
       type: object
       properties:
@@ -1692,6 +1713,13 @@ components:
       required:
         - metrics
         - query
+    FlappingParams:
+      type: object
+      properties:
+        minAllowedValue:
+          type: number
+        maxAllowedValue:
+          type: number
     MonitorMetric:
       type: object
       properties:
