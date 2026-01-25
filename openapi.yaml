@@ -166,10 +166,10 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /api/v1/data/seed:
+  /api/v1/fixtures:
     put:
-      summary: Seed data fixtures
-      operationId: seedDataFixtures
+      summary: Sync fixtures
+      operationId: syncFixtures
       description:
         Create, update, or delete users, orgs, projects, and related resources
         using fixture keys.
@@ -210,10 +210,10 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /api/v1/data/link:
+  /api/v1/fixtures/bindings:
     put:
-      summary: Link existing resources to fixture keys
-      operationId: linkFixtureKeys
+      summary: Bind existing resources to fixture keys
+      operationId: bindFixtureKeys
       description: Assign fixture keys to existing resources created outside of fixtures.
       tags: [Fixtures]
       requestBody:
@@ -231,7 +231,7 @@ paths:
                   key: existing_project
       responses:
         "200":
-          description: Links applied successfully.
+          description: Bindings applied successfully.
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
