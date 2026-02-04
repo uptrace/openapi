@@ -1308,27 +1308,21 @@ components:
       name: time_start
       in: query
       required: true
-      description: Start time as unix milliseconds or RFC3339 timestamp.
+      description: Start time as RFC3339 timestamp.
       schema:
-        oneOf:
-          - type: number
-            description: Unix time in milliseconds.
-          - type: string
-            format: date-time
-            description: RFC3339 timestamp.
+        type: string
+        format: date-time
+        description: RFC3339 timestamp.
       example: 2023-07-10T00:00:00Z
     TimeEnd:
       name: time_end
       in: query
       required: true
-      description: End time as unix milliseconds or RFC3339 timestamp.
+      description: End time as RFC3339 timestamp.
       schema:
-        oneOf:
-          - type: number
-            description: Unix time in milliseconds.
-          - type: string
-            format: date-time
-            description: RFC3339 timestamp.
+        type: string
+        format: date-time
+        description: RFC3339 timestamp.
       example: 2023-07-11T00:00:00Z
     Limit:
       name: limit
