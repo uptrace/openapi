@@ -74,8 +74,11 @@ paths:
       summary: List spans
       x-badges:
         - name: global
-      operationId: listSpans
-      description: List spans using the stable public API. Filter by trace_id, span id, or parent_id. For advanced filtering with UQL queries, use querySpans instead.
+      operationId: publicListSpans
+      description: >-
+        List spans (public API). Stable API for listing spans by trace_id, span_id, or parent_id.
+        For advanced filtering with UQL queries, WHERE clauses, full-text search,
+        and system filtering, use the internal API instead.
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -141,8 +144,12 @@ paths:
       summary: List groups
       x-badges:
         - name: global
-      operationId: listSpanGroups
-      description: List span groups using the stable public API. Supports basic search and duration filtering. For advanced aggregation with UQL queries (GROUP BY, aggregate functions), use querySpanGroups instead.
+      operationId: publicListSpanGroups
+      description: >-
+        List span groups (public API). Stable API for listing aggregated span groups.
+        Supports basic search and duration filtering.
+        For advanced aggregation with UQL queries (GROUP BY, aggregate functions),
+        use the internal API instead.
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -213,13 +220,13 @@ paths:
   /internal/v1/tracing/{project_id}/spans:
     get:
       summary: List spans
-      operationId: querySpans
+      operationId: listSpans
       description: >-
         List individual spans using UQL (Uptrace Query Language).
         Supports WHERE filters (e.g. where service_name = 'myservice', where _status_code = 'error',
         where _dur_ms > 100ms), full-text search (e.g. word1|word2 -excluded),
         system filtering (e.g. httpserver:all, db:postgresql, log:error),
-        duration filtering in microseconds, and sorting by any span field.
+        duration filtering in milliseconds, and sorting by any span field.
         Span fields use underscore prefix: _name, _dur_ms, _status_code, _time, _trace_id, _kind.
         Attributes use dot-to-underscore: service.name becomes service_name.
       tags: [Querying]
@@ -354,7 +361,7 @@ paths:
   /internal/v1/tracing/{project_id}/groups:
     get:
       summary: List groups
-      operationId: querySpanGroups
+      operationId: listSpanGroups
       description: >-
         List span groups using UQL aggregation queries. Uptrace groups similar spans by system, name, and kind.
         Use UQL query with aggregate functions: count(), avg(), sum(), min(), max(),
