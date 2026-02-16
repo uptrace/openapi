@@ -72,8 +72,15 @@ paths:
   /api/v1/tracing/{project_id}/spans:
     get:
       summary: List spans
-      operationId: listSpans
-      description: Retrieve a list of spans.
+      x-badges:
+        - name: global
+      operationId: publicListSpans
+      description: >-
+        List spans (public API). Stable API for listing spans by trace_id, span_id, or parent_id.
+        Best for retrieving known spans when you already have an ID.
+        For advanced filtering with UQL queries (WHERE, search, system filtering),
+        use list_spans instead.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -105,16 +112,27 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: true
+                properties:
+                  spans:
+                    type: array
+                    description: Array of span objects.
+                    items:
+                      $ref: "#/components/schemas/Span"
+                  hasMore:
+                    type: boolean
+                    description: Whether more results exist beyond the limit.
+                required: [spans]
               example:
                 spans:
-                  - id: 12345
-                    traceId: 17706d68ea23cf9bc8976ca57d22ee31
-                    parentId: 0
+                  - id: "acb4d95e58413013"
+                    traceId: "17706d68ea23cf9bc8976ca57d22ee31"
+                    parentId: ""
                     name: GET /api/v1/orders
                     kind: server
-                    time: 2023-07-10T00:00:01Z
-                    duration: 1200
+                    time: 1688947201000.0
+                    duration: 1.2
+                    statusCode: ok
+                hasMore: false
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -126,8 +144,15 @@ paths:
   /api/v1/tracing/{project_id}/groups:
     get:
       summary: List groups
-      operationId: listSpanGroups
-      description: Aggregate spans using UQL.
+      x-badges:
+        - name: global
+      operationId: publicListSpanGroups
+      description: >-
+        List span groups (public API). Stable API for listing aggregated span groups.
+        Supports basic search and duration filtering.
+        For advanced aggregation with UQL queries (GROUP BY, HAVING, aggregate functions),
+        use list_span_groups instead.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -148,18 +173,18 @@ paths:
           example: option1|option2
         - name: duration_gte
           in: query
-          description: Duration greater than or equal to N (microseconds).
+          description: Duration greater than or equal to N (milliseconds).
           schema:
             type: integer
             format: int64
-          example: 10000
+          example: 1000
         - name: duration_lt
           in: query
-          description: Duration less than N (microseconds).
+          description: Duration less than N (milliseconds).
           schema:
             type: integer
             format: int64
-          example: 100000
+          example: 5000
       responses:
         "200":
           description: Aggregated spans.
@@ -167,14 +192,733 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: true
+                properties:
+                  groups:
+                    type: array
+                    description: Array of group rows with dynamic columns based on the query.
+                    items:
+                      type: object
+                      additionalProperties: true
+                  hasMore:
+                    type: boolean
+                    description: Whether more results exist beyond the limit.
+                required: [groups]
               example:
                 groups:
-                  - group: host-1
-                    spans: 1240
-                    errors: 12
+                  - host_name: host-1
+                    count: 1240
+                    errorCount: 12
                     p50: 850
                     p95: 2400
+                hasMore: false
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/tracing/{project_id}/spans:
+    get:
+      summary: List spans
+      operationId: listSpans
+      description: >-
+        List individual spans using UQL (Uptrace Query Language).
+        Use this to inspect specific span details, search for errors, or browse recent operations.
+        Supports WHERE filters (e.g. where service_name = 'myservice', where _status_code = 'error',
+        where _dur_ms > 100ms), full-text search (e.g. word1|word2 -excluded),
+        system filtering (e.g. httpserver:all, db:postgresql, log:error),
+        duration filtering in milliseconds, and sorting by any span field.
+        Span fields use underscore prefix: _name, _dur_ms, _status_code, _time, _trace_id, _kind.
+        Attributes use dot-to-underscore: service.name becomes service_name.
+        Returns individual span objects with attrs, timing, and status.
+        Use list_span_groups instead when you need aggregated metrics (count, avg, p99).
+        Use list_traces instead when you need to find traces matching multi-span criteria.
+        Documentation: https://uptrace.dev/features/querying/spans
+      tags: [Querying]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: query
+          in: query
+          description: UQL query to filter spans (e.g., where service_name = 'myservice').
+          schema:
+            type: string
+          example: "where service_name = 'myservice'"
+        - name: where
+          in: query
+          description: Additional WHERE clause appended to the query.
+          schema:
+            type: string
+          example: "service_name = 'myservice'"
+        - name: search
+          in: query
+          description: Full-text search for spans containing the given text.
+          schema:
+            type: string
+          example: "GET /api"
+        - name: search_attrs
+          in: query
+          description: Attribute names to search within when using search. Can be repeated for multiple attributes.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["display_name"]
+        - name: system
+          in: query
+          description: Filter by system (e.g., log:error, db:postgresql). Can be repeated for multiple systems.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["log:error"]
+        - name: sort_by
+          in: query
+          description: Column names to sort by. Can be repeated for multi-column sort. Defaults to time.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["_time"]
+        - name: sort_dir
+          in: query
+          description: Sort direction for each sort_by column. Must match sort_by count. Defaults to DESC.
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SortDirection'
+          example: ["DESC"]
+        - name: duration_gte
+          in: query
+          description: Duration greater than or equal to N (milliseconds).
+          schema:
+            type: integer
+            format: int64
+          example: 1000
+        - name: duration_lt
+          in: query
+          description: Duration less than N (milliseconds).
+          schema:
+            type: integer
+            format: int64
+          example: 5000
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: List of matching spans.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  spans:
+                    type: array
+                    description: Array of span objects.
+                    items:
+                      $ref: "#/components/schemas/Span"
+                  count:
+                    type: integer
+                    format: int64
+                    description: Total count of matching spans.
+                  query:
+                    type: array
+                    description: Parsed query parts with error state.
+                    items:
+                      type: object
+                      additionalProperties: true
+                  order:
+                    type: array
+                    description: Applied sorting configuration.
+                    items:
+                      $ref: '#/components/schemas/OrderItem'
+                  search:
+                    type: array
+                    description: Applied search matchers.
+                    items:
+                      type: object
+                      additionalProperties: true
+                  whereAttrs:
+                    type: object
+                    description: Map of WHERE attribute names to their matched values.
+                    additionalProperties: true
+                required: [spans, count]
+              example:
+                spans:
+                  - id: "acb4d95e58413013"
+                    traceId: "07f3834da9d146dd4d6aea67fe5b1e95"
+                    parentId: "6a1445d6b82b6c5d"
+                    name: GET /api/v1/orders
+                    kind: server
+                    time: 1770985573458.9
+                    duration: 1.2
+                    statusCode: ok
+                count: 1
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/tracing/{project_id}/groups:
+    get:
+      summary: List groups
+      operationId: listSpanGroups
+      description: >-
+        Aggregate spans into groups using UQL queries.
+        Use this to get aggregated metrics like request count, error rate, or latency percentiles.
+        Aggregate functions: count(), avg(), sum(), min(), max(),
+        p50(), p75(), p90(), p99(), uniq(), apdex().
+        Supports GROUP BY (e.g. group by service_name), HAVING (e.g. having p50(_dur_ms) > 100ms),
+        WHERE filters, full-text search, system filtering (e.g. httpserver:all, db:postgresql),
+        and duration filtering. Example query: 'perMin(count()) | group by host_name'.
+        Returns grouped rows with dynamic columns based on the query.
+        Use list_spans instead when you need individual span details.
+        Use timeseries instead when you need time-bucketed data for charts.
+        Documentation: https://uptrace.dev/features/querying/spans
+      tags: [Querying]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: query
+          in: query
+          description: UQL aggregation query (e.g., perMin(count()) | group by host_name).
+          schema:
+            type: string
+          example: "perMin(count()) | group by host_name"
+        - name: where
+          in: query
+          description: Additional WHERE clause appended to the query.
+          schema:
+            type: string
+          example: "service_name = 'myservice'"
+        - name: search
+          in: query
+          description: Full-text search for spans containing the given text.
+          schema:
+            type: string
+          example: "GET /api"
+        - name: search_attrs
+          in: query
+          description: Attribute names to search within when using search. Can be repeated for multiple attributes.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["display_name"]
+        - name: system
+          in: query
+          description: Filter by system (e.g., log:error, db:postgresql). Can be repeated for multiple systems.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["spans:all"]
+        - name: sort_by
+          in: query
+          description: Column names to sort by. Can be repeated for multi-column sort.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["count"]
+        - name: sort_dir
+          in: query
+          description: Sort direction for each sort_by column. Must match sort_by count. Defaults to DESC.
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SortDirection'
+          example: ["DESC"]
+        - name: duration_gte
+          in: query
+          description: Duration greater than or equal to N (milliseconds).
+          schema:
+            type: integer
+            format: int64
+          example: 1000
+        - name: duration_lt
+          in: query
+          description: Duration less than N (milliseconds).
+          schema:
+            type: integer
+            format: int64
+          example: 5000
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Aggregated span groups.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupsResult"
+              example:
+                groups:
+                  - host_name: host-1
+                    count: 1240
+                    errorCount: 12
+                    p50: 850
+                    p95: 2400
+                columns:
+                  - name: count
+                    isNum: true
+                hasMore: false
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/tracing/{project_id}/timeseries:
+    get:
+      summary: Timeseries
+      operationId: queryTimeseries
+      description: >-
+        Query time-bucketed aggregation data for spans.
+        Use this to analyze trends over time, detect anomalies, or build charts.
+        Returns aligned timestamps with auto-computed interval based on the time range.
+        Use UQL aggregation query (e.g. perMin(count()) | group by service_name)
+        with aggregate functions: count(), avg(), sum(), p50(), p90(), p99(), etc.
+        Use column parameter to select specific aggregate columns for the timeseries.
+        Supports WHERE filters, full-text search, system filtering, and duration filtering.
+        Returns groups with arrays of float values aligned with the time array.
+        Use list_span_groups instead when you need a single aggregated snapshot (not time-bucketed).
+        Use quantiles instead when you only need latency percentiles (p50/p90/p99).
+        Documentation: https://uptrace.dev/features/querying/spans
+      tags: [Querying]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: query
+          in: query
+          description: UQL aggregation query (e.g., perMin(count()) | group by service_name).
+          schema:
+            type: string
+          example: "perMin(count()) | group by service_name"
+        - name: where
+          in: query
+          description: Additional WHERE clause appended to the query.
+          schema:
+            type: string
+          example: "service_name = 'myservice'"
+        - name: search
+          in: query
+          description: Full-text search for spans containing the given text.
+          schema:
+            type: string
+          example: "GET /api"
+        - name: search_attrs
+          in: query
+          description: Attribute names to search within when using search. Can be repeated for multiple attributes.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["display_name"]
+        - name: system
+          in: query
+          description: Filter by system (e.g., log:error, db:postgresql). Can be repeated for multiple systems.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["spans:all"]
+        - name: column
+          in: query
+          description: Aggregate column names to include in the timeseries. Can be repeated for multiple columns.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["count"]
+        - name: duration_gte
+          in: query
+          description: Duration greater than or equal to N (milliseconds).
+          schema:
+            type: integer
+            format: int64
+          example: 10000
+        - name: duration_lt
+          in: query
+          description: Duration less than N (milliseconds).
+          schema:
+            type: integer
+            format: int64
+          example: 100000
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Timeseries data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groups:
+                    type: array
+                    description: Array of group rows. Aggregated columns contain arrays of float values aligned with the time array.
+                    items:
+                      type: object
+                      additionalProperties: true
+                  columns:
+                    type: array
+                    description: Column definitions for the result.
+                    items:
+                      $ref: "#/components/schemas/QueryColumn"
+                  time:
+                    type: array
+                    description: Array of aligned timestamps as unix milliseconds.
+                    items:
+                      type: number
+                      format: double
+                  interval:
+                    type: integer
+                    format: int64
+                    description: Time interval between data points in milliseconds.
+                  query:
+                    type: array
+                    description: Parsed query parts with error state.
+                    items:
+                      type: object
+                      additionalProperties: true
+                  order:
+                    type: array
+                    description: Applied sorting configuration.
+                    items:
+                      $ref: '#/components/schemas/OrderItem'
+                  whereAttrs:
+                    type: object
+                    description: Map of WHERE attribute names to their matched values.
+                    additionalProperties: true
+                required: [groups, time, interval]
+              example:
+                groups:
+                  - service_name: myservice
+                    "perMin(count())": [10.5, 20.3, 15.1, 30.7]
+                time: [1688947200000, 1688947260000, 1688947320000, 1688947380000]
+                interval: 60000
+                columns:
+                  - expr: "perMin(count())"
+                    name: "perMin(count())"
+                    isAgg: true
+                    isNum: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/tracing/{project_id}/quantiles:
+    get:
+      summary: Quantiles
+      operationId: queryQuantiles
+      description: >-
+        Query duration percentiles (p50, p90, p99) and count/error rate over time.
+        Use this to identify latency outliers, track performance degradation, or compare SLO compliance.
+        Returns named timeseries: count, countPerMin, errorCount, errorCountPerMin,
+        durationP50, durationP90, durationP99, durationMax.
+        Supports WHERE filters (e.g. where service_name = 'myservice'),
+        full-text search, system filtering (e.g. httpserver:all), and duration filtering.
+        Use timeseries instead when you need custom aggregation queries with GROUP BY.
+        Use list_span_groups instead when you need a single aggregated snapshot.
+        Documentation: https://uptrace.dev/features/querying/spans
+      tags: [Querying]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: query
+          in: query
+          description: UQL query to filter spans (e.g., where service_name = 'myservice').
+          schema:
+            type: string
+          example: "where service_name = 'myservice'"
+        - name: where
+          in: query
+          description: Additional WHERE clause appended to the query.
+          schema:
+            type: string
+          example: "service_name = 'myservice'"
+        - name: search
+          in: query
+          description: Full-text search for spans containing the given text.
+          schema:
+            type: string
+          example: "GET /api"
+        - name: search_attrs
+          in: query
+          description: Attribute names to search within when using search. Can be repeated for multiple attributes.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["display_name"]
+        - name: system
+          in: query
+          description: Filter by system (e.g., log:error, db:postgresql). Can be repeated for multiple systems.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["spans:all"]
+        - name: duration_gte
+          in: query
+          description: Duration greater than or equal to N (milliseconds).
+          schema:
+            type: integer
+            format: int64
+          example: 10000
+        - name: duration_lt
+          in: query
+          description: Duration less than N (milliseconds).
+          schema:
+            type: integer
+            format: int64
+          example: 100000
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Quantile timeseries data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timeseries:
+                    type: array
+                    description: >-
+                      Array of named timeseries. Names include: count, countPerMin, errorCount, errorCountPerMin,
+                      durationP50, durationP90, durationP99, durationMax.
+                    items:
+                      $ref: "#/components/schemas/Timeseries"
+                required: [timeseries]
+              example:
+                timeseries:
+                  - name: durationP50
+                    value: [1.2, 1.3, 1.1]
+                    time: [1688947200000, 1688947260000, 1688947320000]
+                  - name: countPerMin
+                    value: [100, 120, 90]
+                    time: [1688947200000, 1688947260000, 1688947320000]
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/tracing/{project_id}/trace-groups:
+    get:
+      summary: List trace groups
+      operationId: listTraceGroups
+      description: >-
+        Aggregate traces into groups using correlated sub-queries.
+        Use this to find trace patterns and get aggregated trace metrics.
+        Requires parallel arrays: query[], alias[], system[] with matching lengths.
+        One alias must be 'root' to identify the root span query.
+        Additional sub-queries filter traces where child spans match specific criteria.
+        Systems: spans:all, httpserver:all, db:postgresql, log:error, etc.
+        Returns grouped rows with dynamic columns.
+        Use list_traces instead when you need individual trace details.
+        Use list_span_groups instead when you don't need cross-span trace correlation.
+        Documentation: https://uptrace.dev/features/querying/spans
+      tags: [Querying]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: query
+          in: query
+          description: UQL query for each sub-query. Must have the same count as alias and system. Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["where service_name = 'myservice'"]
+        - name: alias
+          in: query
+          description: Alias for each sub-query. One alias must be 'root'. Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["root"]
+        - name: system
+          in: query
+          description: System for each sub-query (e.g., spans:all, log:error). Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["spans:all"]
+        - name: sort_by
+          in: query
+          description: Column names to sort by. Can be repeated for multi-column sort.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["count"]
+        - name: sort_dir
+          in: query
+          description: Sort direction for each sort_by column. Must match sort_by count. Defaults to DESC.
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SortDirection'
+          example: ["DESC"]
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Trace groups result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupsResult"
+              example:
+                groups:
+                  - _group_id: "100"
+                    count: 42
+                    errorCount: 2
+                columns:
+                  - name: count
+                    isNum: true
+                hasMore: false
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/tracing/{project_id}/traces:
+    get:
+      summary: List traces
+      operationId: listTraces
+      description: >-
+        List individual traces using correlated sub-queries.
+        Use this to find specific traces matching complex multi-span criteria.
+        Requires parallel arrays: query[], alias[], system[] with matching lengths.
+        One alias must be 'root' to identify the root span query.
+        Additional sub-queries filter traces where child spans match specific criteria.
+        Systems: spans:all, httpserver:all, db:postgresql, log:error, etc.
+        Returns root spans for matching traces sorted by time (DESC by default).
+        Use list_trace_groups instead when you need aggregated trace metrics.
+        Use list_spans instead when you don't need cross-span trace correlation.
+        Documentation: https://uptrace.dev/features/querying/spans
+      tags: [Querying]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: query
+          in: query
+          description: UQL query for each sub-query. Must have the same count as alias and system. Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["where service_name = 'myservice'"]
+        - name: alias
+          in: query
+          description: Alias for each sub-query. One alias must be 'root'. Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["root"]
+        - name: system
+          in: query
+          description: System for each sub-query (e.g., spans:all, log:error). Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["spans:all"]
+        - name: sort_by
+          in: query
+          description: Column names to sort by. Can be repeated for multi-column sort. Defaults to time.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["_time"]
+        - name: sort_dir
+          in: query
+          description: Sort direction for each sort_by column. Must match sort_by count. Defaults to DESC.
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SortDirection'
+          example: ["DESC"]
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: List of matching traces.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  spans:
+                    type: array
+                    description: Root spans for matching traces.
+                    items:
+                      $ref: "#/components/schemas/Span"
+                  count:
+                    type: integer
+                    format: int64
+                    description: Total count of matching traces.
+                  query:
+                    type: array
+                    description: Parsed query parts with error state.
+                    items:
+                      type: object
+                      additionalProperties: true
+                  order:
+                    type: array
+                    description: Applied sorting configuration.
+                    items:
+                      $ref: '#/components/schemas/OrderItem'
+                  search:
+                    type: array
+                    description: Applied search matchers.
+                    items:
+                      type: object
+                      additionalProperties: true
+                  whereAttrs:
+                    type: object
+                    description: Map of WHERE attribute names to their matched values.
+                    additionalProperties: true
+                required: [spans, count]
+              example:
+                spans:
+                  - id: "298ec3d46392d4b7"
+                    traceId: "103ba7cd7900cdf2b04e842e15ad9702"
+                    name: GET /api/v1/orders
+                    displayName: GET /api/v1/orders
+                    time: 1770985602526.471
+                    duration: 1.634
+                    statusCode: ok
+                count: 1
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -265,7 +1009,13 @@ paths:
       x-badges:
         - name: beta
       operationId: listMonitors
-      description: Retrieve all monitors for a project.
+      description: >-
+        List monitoring rules and alerts configured in Uptrace.
+        Use this to review alert configurations, check notification channels,
+        and understand monitoring thresholds.
+        Returns monitors with their type, state, query, and notification settings.
+        Use list_dashboards instead when looking for visualization dashboards.
+        Documentation: https://uptrace.dev/features/alerting
       tags: [Monitors]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -502,7 +1252,13 @@ paths:
       x-badges:
         - name: beta
       operationId: listDashboards
-      description: Retrieve all dashboards for a project.
+      description: >-
+        List dashboards configured in Uptrace.
+        Use this to browse available dashboards for monitoring and visualization.
+        Returns dashboard summaries with ID, name, and tags.
+        Use get_dashboard with a specific ID to retrieve full dashboard details including grid rows and items.
+        Use create_dashboard to create a new dashboard from YAML.
+        Documentation: https://uptrace.dev/features/dashboards
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -535,7 +1291,13 @@ paths:
       x-badges:
         - name: beta
       operationId: createDashboardFromYAML
-      description: Create a new dashboard from YAML definition.
+      description: >-
+        Create a new dashboard from YAML definition.
+        Use this to create visualization dashboards for spans, events, logs, and metrics.
+        Supports grid-based and table-based layouts with PromQL-style metric queries.
+        The YAML body must include: schema (v2 or v3) and name. Optional fields: version, tags.
+        Use list_dashboards and get_dashboard to inspect existing dashboards as examples.
+        Documentation: https://uptrace.dev/features/dashboards
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -568,7 +1330,11 @@ paths:
       x-badges:
         - name: beta
       operationId: getDashboard
-      description: Retrieve a specific dashboard by ID with grid rows and items.
+      description: >-
+        Get a dashboard by ID from Uptrace.
+        Use this to retrieve full dashboard details including grid rows, items, and metric queries.
+        Requires a dashboard_id -- use list_dashboards first to find available dashboard IDs.
+        Documentation: https://uptrace.dev/features/dashboards
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -1305,20 +2071,20 @@ components:
         type: integer
         format: int64
     TimeStart:
-      name: time_start
+      name: time_gte
       in: query
       required: true
-      description: Start time as RFC3339 timestamp.
+      description: Start time (inclusive) as RFC3339 timestamp.
       schema:
         type: string
         format: date-time
         description: RFC3339 timestamp.
       example: 2023-07-10T00:00:00Z
     TimeEnd:
-      name: time_end
+      name: time_lt
       in: query
       required: true
-      description: End time as RFC3339 timestamp.
+      description: End time (exclusive) as RFC3339 timestamp.
       schema:
         type: string
         format: date-time
@@ -1367,6 +2133,195 @@ components:
         format: int64
 
   schemas:
+    SortDirection:
+      type: string
+      enum: [ASC, DESC]
+      description: Sort direction.
+
+    OrderItem:
+      type: object
+      properties:
+        key:
+          type: string
+        order:
+          type: string
+          enum: [asc, desc]
+
+    Span:
+      type: object
+      description: A span representing an individual operation in a distributed trace.
+      properties:
+        id:
+          type: string
+          description: Span ID (hex-encoded).
+        parentId:
+          type: string
+          description: Parent span ID (hex-encoded, empty for root spans).
+        traceId:
+          type: string
+          description: Trace ID (hex-encoded).
+        standalone:
+          type: boolean
+          description: Whether the span is standalone (not part of a trace).
+        projectId:
+          type: integer
+          format: uint32
+          description: Project ID.
+        groupId:
+          type: string
+          description: Group ID (uint64 as string).
+        type:
+          type: string
+          description: Telemetry type (spans, events, logs, funcs).
+        system:
+          type: string
+          description: Detected system (e.g., httpserver:all, db:postgresql, log:error).
+        kind:
+          type: string
+          description: Span kind (client, server, producer, consumer, internal).
+        name:
+          type: string
+          description: Span name.
+        eventName:
+          type: string
+          description: Event name (for event spans).
+        displayName:
+          type: string
+          description: Human-readable operation summary.
+        time:
+          type: number
+          format: double
+          description: Span start time as unix milliseconds.
+        duration:
+          type: number
+          format: double
+          description: Duration in milliseconds.
+        statusCode:
+          type: string
+          description: Status code (ok, error, unset).
+        statusMessage:
+          type: string
+          description: Optional status message.
+        attrs:
+          type: object
+          additionalProperties: true
+          description: Span attributes as key-value map. Keys include type suffix (e.g., service_name::str, count::int).
+        events:
+          type: array
+          description: Child event spans.
+          items:
+            type: object
+            additionalProperties: true
+        logs:
+          type: array
+          description: Child log spans.
+          items:
+            type: object
+            additionalProperties: true
+        links:
+          type: array
+          description: Span links to other spans.
+          items:
+            type: object
+            properties:
+              traceId:
+                type: string
+              spanId:
+                type: string
+              attrs:
+                type: object
+                additionalProperties: true
+      required: [id, traceId, name, time, duration, statusCode]
+
+    GroupsResult:
+      type: object
+      description: Result of a span group aggregation query.
+      properties:
+        groups:
+          type: array
+          description: Array of group rows with dynamic columns. Each row may contain __hash, __name, __query metadata fields.
+          items:
+            type: object
+            additionalProperties: true
+        columns:
+          type: array
+          description: Column definitions describing the result schema.
+          items:
+            $ref: "#/components/schemas/QueryColumn"
+        hasMore:
+          type: boolean
+          description: Whether more results exist beyond the limit.
+        query:
+          type: array
+          description: Parsed query parts with error state.
+          items:
+            type: object
+            additionalProperties: true
+        order:
+          type: array
+          description: Applied sorting configuration.
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        search:
+          type: array
+          description: Applied search matchers.
+          items:
+            type: object
+            additionalProperties: true
+        whereAttrs:
+          type: object
+          description: Map of WHERE attribute names to their matched values.
+          additionalProperties: true
+      required: [groups]
+
+    QueryColumn:
+      type: object
+      description: Column definition for a query result.
+      properties:
+        name:
+          type: string
+          description: Column name.
+        expr:
+          type: string
+          description: Column expression as written in the query.
+        unit:
+          type: string
+          description: Column unit (e.g., ms, bytes).
+        isNum:
+          type: boolean
+          description: Whether the column contains numeric values.
+        isAgg:
+          type: boolean
+          description: Whether the column is an aggregation.
+        isGroup:
+          type: boolean
+          description: Whether the column is a GROUP BY key.
+        aggFunc:
+          type: string
+          description: Aggregation function applied to this column.
+      required: [name]
+
+    Timeseries:
+      type: object
+      description: A named timeseries with values aligned to timestamps.
+      properties:
+        name:
+          type: string
+          description: Metric name (e.g., countPerMin, errorCountPerMin, durationP50, durationP90, durationP99).
+        value:
+          type: array
+          description: Array of metric values.
+          items:
+            type: number
+            format: double
+        time:
+          type: array
+          description: Array of timestamps as unix milliseconds.
+          items:
+            type: number
+            format: double
+      required: [name, value, time]
+
     AnnotationCreateRequest:
       type: object
       properties:
