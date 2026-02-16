@@ -77,8 +77,10 @@ paths:
       operationId: publicListSpans
       description: >-
         List spans (public API). Stable API for listing spans by trace_id, span_id, or parent_id.
-        For advanced filtering with UQL queries, WHERE clauses, full-text search,
-        and system filtering, use the internal API instead.
+        Best for retrieving known spans when you already have an ID.
+        For advanced filtering with UQL queries (WHERE, search, system filtering),
+        use list_spans instead.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -148,8 +150,9 @@ paths:
       description: >-
         List span groups (public API). Stable API for listing aggregated span groups.
         Supports basic search and duration filtering.
-        For advanced aggregation with UQL queries (GROUP BY, aggregate functions),
-        use the internal API instead.
+        For advanced aggregation with UQL queries (GROUP BY, HAVING, aggregate functions),
+        use list_span_groups instead.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -223,12 +226,17 @@ paths:
       operationId: listSpans
       description: >-
         List individual spans using UQL (Uptrace Query Language).
+        Use this to inspect specific span details, search for errors, or browse recent operations.
         Supports WHERE filters (e.g. where service_name = 'myservice', where _status_code = 'error',
         where _dur_ms > 100ms), full-text search (e.g. word1|word2 -excluded),
         system filtering (e.g. httpserver:all, db:postgresql, log:error),
         duration filtering in milliseconds, and sorting by any span field.
         Span fields use underscore prefix: _name, _dur_ms, _status_code, _time, _trace_id, _kind.
         Attributes use dot-to-underscore: service.name becomes service_name.
+        Returns individual span objects with attrs, timing, and status.
+        Use list_span_groups instead when you need aggregated metrics (count, avg, p99).
+        Use list_traces instead when you need to find traces matching multi-span criteria.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -363,12 +371,17 @@ paths:
       summary: List groups
       operationId: listSpanGroups
       description: >-
-        List span groups using UQL aggregation queries. Uptrace groups similar spans by system, name, and kind.
-        Use UQL query with aggregate functions: count(), avg(), sum(), min(), max(),
+        Aggregate spans into groups using UQL queries.
+        Use this to get aggregated metrics like request count, error rate, or latency percentiles.
+        Aggregate functions: count(), avg(), sum(), min(), max(),
         p50(), p75(), p90(), p99(), uniq(), apdex().
         Supports GROUP BY (e.g. group by service_name), HAVING (e.g. having p50(_dur_ms) > 100ms),
         WHERE filters, full-text search, system filtering (e.g. httpserver:all, db:postgresql),
-        and duration filtering.
+        and duration filtering. Example query: 'perMin(count()) | group by host_name'.
+        Returns grouped rows with dynamic columns based on the query.
+        Use list_spans instead when you need individual span details.
+        Use timeseries instead when you need time-bucketed data for charts.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -471,11 +484,17 @@ paths:
       summary: Timeseries
       operationId: queryTimeseries
       description: >-
-        Query time-bucketed aggregation data for spans. Returns aligned timestamps with computed interval
-        based on the time range. Use UQL aggregation query (e.g. perMin(count()) | group by service_name)
+        Query time-bucketed aggregation data for spans.
+        Use this to analyze trends over time, detect anomalies, or build charts.
+        Returns aligned timestamps with auto-computed interval based on the time range.
+        Use UQL aggregation query (e.g. perMin(count()) | group by service_name)
         with aggregate functions: count(), avg(), sum(), p50(), p90(), p99(), etc.
         Use column parameter to select specific aggregate columns for the timeseries.
         Supports WHERE filters, full-text search, system filtering, and duration filtering.
+        Returns groups with arrays of float values aligned with the time array.
+        Use list_span_groups instead when you need a single aggregated snapshot (not time-bucketed).
+        Use quantiles instead when you only need latency percentiles (p50/p90/p99).
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -609,10 +628,14 @@ paths:
       operationId: queryQuantiles
       description: >-
         Query duration percentiles (p50, p90, p99) and count/error rate over time.
-        Returns time-bucketed latency distribution data for analyzing service performance.
+        Use this to identify latency outliers, track performance degradation, or compare SLO compliance.
+        Returns named timeseries: count, countPerMin, errorCount, errorCountPerMin,
+        durationP50, durationP90, durationP99, durationMax.
         Supports WHERE filters (e.g. where service_name = 'myservice'),
         full-text search, system filtering (e.g. httpserver:all), and duration filtering.
-        Use this to identify latency outliers and track performance degradation.
+        Use timeseries instead when you need custom aggregation queries with GROUP BY.
+        Use list_span_groups instead when you need a single aggregated snapshot.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -705,11 +728,16 @@ paths:
       summary: List trace groups
       operationId: listTraceGroups
       description: >-
-        List trace groups using correlated sub-queries. Requires parallel arrays: query[], alias[], system[]
-        with matching lengths. One alias must be 'root' to identify the root span query.
-        Additional sub-queries filter traces by child span criteria.
+        Aggregate traces into groups using correlated sub-queries.
+        Use this to find trace patterns and get aggregated trace metrics.
+        Requires parallel arrays: query[], alias[], system[] with matching lengths.
+        One alias must be 'root' to identify the root span query.
+        Additional sub-queries filter traces where child spans match specific criteria.
         Systems: spans:all, httpserver:all, db:postgresql, log:error, etc.
-        Use this to find trace patterns where root spans match one criteria and child spans match another.
+        Returns grouped rows with dynamic columns.
+        Use list_traces instead when you need individual trace details.
+        Use list_span_groups instead when you don't need cross-span trace correlation.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -786,11 +814,16 @@ paths:
       summary: List traces
       operationId: listTraces
       description: >-
-        List individual traces using correlated sub-queries. Requires parallel arrays: query[], alias[], system[]
-        with matching lengths. One alias must be 'root' to identify the root span query.
-        Additional sub-queries filter traces by child span criteria.
+        List individual traces using correlated sub-queries.
+        Use this to find specific traces matching complex multi-span criteria.
+        Requires parallel arrays: query[], alias[], system[] with matching lengths.
+        One alias must be 'root' to identify the root span query.
+        Additional sub-queries filter traces where child spans match specific criteria.
         Systems: spans:all, httpserver:all, db:postgresql, log:error, etc.
         Returns root spans for matching traces sorted by time (DESC by default).
+        Use list_trace_groups instead when you need aggregated trace metrics.
+        Use list_spans instead when you don't need cross-span trace correlation.
+        Documentation: https://uptrace.dev/features/querying/spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -976,7 +1009,13 @@ paths:
       x-badges:
         - name: beta
       operationId: listMonitors
-      description: Retrieve all monitors for a project.
+      description: >-
+        List monitoring rules and alerts configured in Uptrace.
+        Use this to review alert configurations, check notification channels,
+        and understand monitoring thresholds.
+        Returns monitors with their type, state, query, and notification settings.
+        Use list_dashboards instead when looking for visualization dashboards.
+        Documentation: https://uptrace.dev/features/alerting
       tags: [Monitors]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -1213,7 +1252,13 @@ paths:
       x-badges:
         - name: beta
       operationId: listDashboards
-      description: Retrieve all dashboards for a project.
+      description: >-
+        List dashboards configured in Uptrace.
+        Use this to browse available dashboards for monitoring and visualization.
+        Returns dashboard summaries with ID, name, and tags.
+        Use get_dashboard with a specific ID to retrieve full dashboard details including grid rows and items.
+        Use create_dashboard to create a new dashboard from YAML.
+        Documentation: https://uptrace.dev/features/dashboards
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -1246,7 +1291,13 @@ paths:
       x-badges:
         - name: beta
       operationId: createDashboardFromYAML
-      description: Create a new dashboard from YAML definition.
+      description: >-
+        Create a new dashboard from YAML definition.
+        Use this to create visualization dashboards for spans, events, logs, and metrics.
+        Supports grid-based and table-based layouts with PromQL-style metric queries.
+        The YAML body must include: schema (v2 or v3) and name. Optional fields: version, tags.
+        Use list_dashboards and get_dashboard to inspect existing dashboards as examples.
+        Documentation: https://uptrace.dev/features/dashboards
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -1279,7 +1330,11 @@ paths:
       x-badges:
         - name: beta
       operationId: getDashboard
-      description: Retrieve a specific dashboard by ID with grid rows and items.
+      description: >-
+        Get a dashboard by ID from Uptrace.
+        Use this to retrieve full dashboard details including grid rows, items, and metric queries.
+        Requires a dashboard_id -- use list_dashboards first to find available dashboard IDs.
+        Documentation: https://uptrace.dev/features/dashboards
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
