@@ -1285,6 +1285,42 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/projects/{project_id}/dashboards/tags:
+    get:
+      summary: List dashboard tags
+      x-badges:
+        - name: beta
+      operationId: listDashboardTags
+      description: >-
+        List all available dashboard tags for a project.
+        Tags are simple string labels used for categorizing and filtering dashboards.
+        Use these tags when creating new dashboards to ensure consistent categorization.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: List of available tags.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - tags
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /internal/v1/projects/{project_id}/dashboards/yaml:
     post:
       summary: Create dashboard from YAML
