@@ -1321,6 +1321,119 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/metrics/{project_id}/explore:
+    get:
+      summary: Explore metrics
+      operationId: exploreMetrics
+      description: >-
+        Discover available metrics and their metadata.
+        Returns metric names, instrument types (histogram, counter, gauge, additive),
+        units, descriptions, available attributes, and library info.
+        Use the instrument type to choose the correct aggregate function:
+        histogram metrics support count(), p50(), p90(), p99();
+        counter metrics support sum(), perMin(sum());
+        gauge metrics support sum(), avg(), max(), min();
+        additive metrics support sum(), perMin(sum()).
+        Use the search parameter to filter by metric name.
+        Use this tool before creating dashboards to discover metrics and their attributes.
+      tags: [Metrics]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: search
+          in: query
+          required: false
+          description: Search string to filter metrics by name.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Metrics list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExploreMetricsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /internal/v1/metrics/{project_id}/attributes:
+    get:
+      summary: List metric attributes
+      operationId: listMetricAttributes
+      description: >-
+        List available attribute keys for metrics.
+        Returns attribute keys with their kind (str, int, float), unit, and count (how many metrics use each attribute).
+        Use the search parameter to filter by metric name.
+        Use this to discover which attributes are available for group by in dashboard queries.
+      tags: [Metrics]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: search
+          in: query
+          required: false
+          description: Search string to filter metrics by name.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Attribute keys list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListMetricAttributesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /internal/v1/metrics/{project_id}/attributes/{attr_key}:
+    get:
+      summary: List attribute values
+      operationId: listMetricAttributeValues
+      description: >-
+        List values for a specific metric attribute key.
+        Returns distinct attribute values with their occurrence count.
+        Use the search parameter to filter by metric name.
+      tags: [Metrics]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TimeStart"
+        - $ref: "#/components/parameters/TimeEnd"
+        - name: attr_key
+          in: path
+          required: true
+          description: "Attribute key including type suffix (e.g. host_name::str, http_status_code::int)."
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          description: Search string to filter metrics by name.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Attribute values list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListMetricAttributeValuesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
   /internal/v1/projects/{project_id}/dashboards/yaml:
     post:
       summary: Create dashboard from YAML
@@ -1332,7 +1445,11 @@ paths:
         Use this to create visualization dashboards for spans, events, logs, and metrics.
         Supports grid-based and table-based layouts with PromQL-style metric queries.
         The YAML body must include: schema (v2 or v3) and name. Optional fields: version, tags.
-        Use list_dashboards and get_dashboard to inspect existing dashboards as examples.
+        Use get_dashboard_yaml on an existing dashboard to see the exact YAML format before creating.
+        The API strictly rejects unknown fields.
+        Table and table_grid_items overrides use column (required, must match a query alias) + properties (array of {name, value}).
+        Grid item overrides (in grid_rows) use matchers + properties (array of {name, value}).
+        Sparkline is a table column property ({name: sparkline, value: true}), not a top-level field.
         Documentation: https://uptrace.dev/features/dashboards
       tags: [Dashboards]
       parameters:
@@ -1468,7 +1585,13 @@ paths:
       x-badges:
         - name: beta
       operationId: updateDashboardFromYAML
-      description: Update an existing dashboard from YAML definition.
+      description: >-
+        Update an existing dashboard from YAML definition.
+        Use get_dashboard_yaml first to retrieve the current YAML, then modify and submit.
+        The API strictly rejects unknown fields.
+        Table overrides use column + properties (array of {name, value}).
+        Grid item overrides use matchers + properties (array of {name, value}).
+        Documentation: https://uptrace.dev/features/dashboards
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2384,6 +2507,99 @@ components:
           description: Overrides annotation time in RFC3339 format.
       required:
         - name
+    ExploreMetricsResponse:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExploredMetric"
+        hasMore:
+          type: boolean
+      required: [metrics, hasMore]
+
+    ExploredMetric:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Metric name.
+        instrument:
+          type: string
+          description: "Instrument type: histogram, counter, gauge, or additive."
+        unit:
+          type: string
+          description: Metric unit.
+        description:
+          type: string
+          description: Metric description.
+        attrKeys:
+          type: array
+          items:
+            type: string
+          description: Available attribute keys for grouping.
+        libraryName:
+          type: string
+          description: Instrumentation library name.
+        libraryVersion:
+          type: string
+          description: Instrumentation library version.
+        numTimeseries:
+          type: integer
+          description: Number of active timeseries.
+      required: [name, instrument]
+
+    ListMetricAttributesResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricAttributeKey"
+      required: [items]
+
+    MetricAttributeKey:
+      type: object
+      properties:
+        value:
+          type: string
+          description: "Attribute key with type suffix (e.g. host_name::str)."
+        kind:
+          type: string
+          description: "Attribute type: str, int, float."
+        unit:
+          type: string
+          description: Attribute unit.
+        pinned:
+          type: boolean
+          description: Whether the attribute is pinned.
+        count:
+          type: integer
+          description: Number of metrics using this attribute.
+      required: [value, kind, count]
+
+    ListMetricAttributeValuesResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricAttributeValue"
+        hasMore:
+          type: boolean
+      required: [items, hasMore]
+
+    MetricAttributeValue:
+      type: object
+      properties:
+        value:
+          type: string
+          description: Attribute value.
+        count:
+          type: integer
+          description: Occurrence count.
+      required: [value, count]
+
     Error:
       type: object
       properties:
