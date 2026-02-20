@@ -2526,7 +2526,7 @@ components:
           description: Metric name.
         instrument:
           type: string
-          enum: [histogram, counter, gauge, additive]
+          enum: [histogram, summary, counter, prom-counter, gauge, additive]
           description: OpenTelemetry instrument type.
         unit:
           type: string
