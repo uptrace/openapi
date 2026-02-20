@@ -41,7 +41,7 @@ paths:
   /api/v1/annotations:
     post:
       summary: Create annotation
-      operationId: createAnnotation
+      operationId: create_annotation
       description: Create a chart annotation.
       tags: [Annotations]
       security:
@@ -74,7 +74,7 @@ paths:
       summary: List spans
       x-badges:
         - name: global
-      operationId: publicListSpans
+      operationId: public_list_spans
       description: >-
         List spans (public API). Stable API for listing spans by trace_id, span_id, or parent_id.
         Best for retrieving known spans when you already have an ID.
@@ -146,7 +146,7 @@ paths:
       summary: List groups
       x-badges:
         - name: global
-      operationId: publicListSpanGroups
+      operationId: public_list_span_groups
       description: >-
         List span groups (public API). Stable API for listing aggregated span groups.
         Supports basic search and duration filtering.
@@ -223,7 +223,7 @@ paths:
   /internal/v1/tracing/{project_id}/spans:
     get:
       summary: List spans
-      operationId: listSpans
+      operationId: list_spans
       description: >-
         List individual spans using UQL (Uptrace Query Language).
         Use this to inspect specific span details, search for errors, or browse recent operations.
@@ -369,7 +369,7 @@ paths:
   /internal/v1/tracing/{project_id}/groups:
     get:
       summary: List groups
-      operationId: listSpanGroups
+      operationId: list_span_groups
       description: >-
         Aggregate spans into groups using UQL queries.
         Use this to get aggregated metrics like request count, error rate, or latency percentiles.
@@ -482,7 +482,7 @@ paths:
   /internal/v1/tracing/{project_id}/timeseries:
     get:
       summary: Timeseries
-      operationId: queryTimeseries
+      operationId: query_timeseries
       description: >-
         Query time-bucketed aggregation data for spans.
         Use this to analyze trends over time, detect anomalies, or build charts.
@@ -625,7 +625,7 @@ paths:
   /internal/v1/tracing/{project_id}/quantiles:
     get:
       summary: Quantiles
-      operationId: queryQuantiles
+      operationId: query_quantiles
       description: >-
         Query duration percentiles (p50, p90, p99) and count/error rate over time.
         Use this to identify latency outliers, track performance degradation, or compare SLO compliance.
@@ -726,7 +726,7 @@ paths:
   /internal/v1/tracing/{project_id}/trace-groups:
     get:
       summary: List trace groups
-      operationId: listTraceGroups
+      operationId: list_trace_groups
       description: >-
         Aggregate traces into groups using correlated sub-queries.
         Use this to find trace patterns and get aggregated trace metrics.
@@ -812,7 +812,7 @@ paths:
   /internal/v1/tracing/{project_id}/traces:
     get:
       summary: List traces
-      operationId: listTraces
+      operationId: list_traces
       description: >-
         List individual traces using correlated sub-queries.
         Use this to find specific traces matching complex multi-span criteria.
@@ -931,7 +931,7 @@ paths:
   /api/v1/fixtures:
     put:
       summary: Sync fixtures
-      operationId: syncFixtures
+      operationId: sync_fixtures
       description:
         Create, update, or delete users, orgs, projects, and related resources
         using fixture keys.
@@ -975,7 +975,7 @@ paths:
   /api/v1/fixtures/bindings:
     put:
       summary: Bind existing resources to fixture keys
-      operationId: bindFixtureKeys
+      operationId: bind_fixture_keys
       description: Assign fixture keys to existing resources created outside of fixtures.
       tags: [Fixtures]
       requestBody:
@@ -1008,7 +1008,7 @@ paths:
       summary: List monitors
       x-badges:
         - name: beta
-      operationId: listMonitors
+      operationId: list_monitors
       description: >-
         List monitoring rules and alerts configured in Uptrace.
         Use this to review alert configurations, check notification channels,
@@ -1045,7 +1045,7 @@ paths:
       summary: Create a monitor
       x-badges:
         - name: beta
-      operationId: createMonitor
+      operationId: create_monitor
       description: Create a metric or error monitor.
       tags: [Monitors]
       parameters:
@@ -1121,7 +1121,7 @@ paths:
       summary: Get a monitor
       x-badges:
         - name: beta
-      operationId: getMonitor
+      operationId: get_monitor
       description: Retrieve a specific monitor by ID.
       tags: [Monitors]
       parameters:
@@ -1148,7 +1148,7 @@ paths:
       summary: Update a monitor
       x-badges:
         - name: beta
-      operationId: updateMonitor
+      operationId: update_monitor
       description: Update a metric or error monitor by ID.
       tags: [Monitors]
       parameters:
@@ -1226,7 +1226,7 @@ paths:
       summary: Delete a monitor
       x-badges:
         - name: beta
-      operationId: deleteMonitor
+      operationId: delete_monitor
       description: Delete a metric or error monitor by ID.
       tags: [Monitors]
       parameters:
@@ -1251,7 +1251,7 @@ paths:
       summary: List dashboards
       x-badges:
         - name: beta
-      operationId: listDashboards
+      operationId: list_dashboards
       description: >-
         List dashboards configured in Uptrace.
         Use this to browse available dashboards for monitoring and visualization.
@@ -1290,7 +1290,7 @@ paths:
       summary: List dashboard tags
       x-badges:
         - name: beta
-      operationId: listDashboardTags
+      operationId: list_dashboard_tags
       description: >-
         List all available dashboard tags for a project.
         Tags are simple string labels used for categorizing and filtering dashboards.
@@ -1321,10 +1321,67 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/metrics/{project_id}/dashboards/templates:
+    get:
+      summary: List dashboard templates
+      operationId: list_dashboard_templates
+      description: >-
+        List all available built-in dashboard templates.
+        Returns template ID, name, and description for each template.
+        Use this to discover available templates before creating dashboards.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Dashboard templates list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDashboardTemplatesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /internal/v1/metrics/{project_id}/dashboards/templates/{template_id}:
+    get:
+      summary: Get dashboard template
+      operationId: get_dashboard_template
+      description: >-
+        Get a specific dashboard template by ID.
+        Returns the template ID, name, description, and tags.
+      tags: [Dashboards]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - name: template_id
+          in: path
+          required: true
+          description: Dashboard template ID.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard template.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDashboardTemplateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /internal/v1/metrics/{project_id}/explore:
     get:
       summary: Explore metrics
-      operationId: exploreMetrics
+      operationId: explore_metrics
       description: >-
         Discover available metrics and their metadata.
         Returns metric names, instrument types (histogram, counter, gauge, additive),
@@ -1364,7 +1421,7 @@ paths:
   /internal/v1/metrics/{project_id}/attributes:
     get:
       summary: List metric attributes
-      operationId: listMetricAttributes
+      operationId: list_metric_attributes
       description: >-
         List available attribute keys for metrics.
         Returns attribute keys with their kind (str, int, float), unit, and count (how many metrics use each attribute).
@@ -1398,7 +1455,7 @@ paths:
   /internal/v1/metrics/{project_id}/attributes/{attr_key}:
     get:
       summary: List attribute values
-      operationId: listMetricAttributeValues
+      operationId: list_metric_attribute_values
       description: >-
         List values for a specific metric attribute key.
         Returns distinct attribute values with their occurrence count.
@@ -1439,7 +1496,7 @@ paths:
       summary: Create dashboard from YAML
       x-badges:
         - name: beta
-      operationId: createDashboardFromYAML
+      operationId: create_dashboard_from_yaml
       description: >-
         Create a new dashboard from YAML definition.
         Use this to create visualization dashboards for spans, events, logs, and metrics.
@@ -1482,7 +1539,7 @@ paths:
       summary: Get a dashboard
       x-badges:
         - name: beta
-      operationId: getDashboard
+      operationId: get_dashboard
       description: >-
         Get a dashboard by ID from Uptrace.
         Use this to retrieve full dashboard details including grid rows, items, and metric queries.
@@ -1532,7 +1589,7 @@ paths:
       summary: Delete a dashboard
       x-badges:
         - name: beta
-      operationId: deleteDashboard
+      operationId: delete_dashboard
       description: Delete a dashboard by ID.
       tags: [Dashboards]
       parameters:
@@ -1557,7 +1614,7 @@ paths:
       summary: Get dashboard YAML
       x-badges:
         - name: beta
-      operationId: getDashboardYAML
+      operationId: get_dashboard_yaml
       description: Retrieve the YAML representation of a dashboard.
       tags: [Dashboards]
       parameters:
@@ -1584,7 +1641,7 @@ paths:
       summary: Update dashboard from YAML
       x-badges:
         - name: beta
-      operationId: updateDashboardFromYAML
+      operationId: update_dashboard_from_yaml
       description: >-
         Update an existing dashboard from YAML definition.
         Use get_dashboard_yaml first to retrieve the current YAML, then modify and submit.
@@ -1626,7 +1683,7 @@ paths:
       summary: Clone a dashboard
       x-badges:
         - name: beta
-      operationId: cloneDashboard
+      operationId: clone_dashboard
       description: Create a copy of an existing dashboard.
       tags: [Dashboards]
       parameters:
@@ -1655,7 +1712,7 @@ paths:
       summary: Reset a dashboard
       x-badges:
         - name: beta
-      operationId: resetDashboard
+      operationId: reset_dashboard
       description: Reset dashboard to template or reset layout.
       tags: [Dashboards]
       parameters:
@@ -1680,7 +1737,7 @@ paths:
       summary: Pin a dashboard
       x-badges:
         - name: beta
-      operationId: pinDashboard
+      operationId: pin_dashboard
       description: Pin dashboard to top of dashboard list.
       tags: [Dashboards]
       parameters:
@@ -1705,7 +1762,7 @@ paths:
       summary: Unpin a dashboard
       x-badges:
         - name: beta
-      operationId: unpinDashboard
+      operationId: unpin_dashboard
       description: Unpin dashboard from top of dashboard list.
       tags: [Dashboards]
       parameters:
@@ -1730,7 +1787,7 @@ paths:
       summary: Update dashboard table
       x-badges:
         - name: beta
-      operationId: updateDashboardTable
+      operationId: update_dashboard_table
       description: Update the table configuration of a dashboard.
       tags: [Dashboards]
       parameters:
@@ -1761,7 +1818,7 @@ paths:
       summary: Update dashboard grid query
       x-badges:
         - name: beta
-      operationId: updateDashboardGrid
+      operationId: update_dashboard_grid
       description: Update the global grid query filter for a dashboard.
       tags: [Dashboards]
       parameters:
@@ -1793,7 +1850,7 @@ paths:
       summary: Create grid item
       x-badges:
         - name: beta
-      operationId: createGridItem
+      operationId: create_grid_item
       description: Create a new grid item in the dashboard.
       tags: [Dashboards]
       parameters:
@@ -1828,7 +1885,7 @@ paths:
       summary: Update grid item
       x-badges:
         - name: beta
-      operationId: updateGridItem
+      operationId: update_grid_item
       description: Update an existing grid item.
       tags: [Dashboards]
       parameters:
@@ -1862,7 +1919,7 @@ paths:
       summary: Delete grid item
       x-badges:
         - name: beta
-      operationId: deleteGridItem
+      operationId: delete_grid_item
       description: Delete a grid item from the dashboard.
       tags: [Dashboards]
       parameters:
@@ -1892,7 +1949,7 @@ paths:
       summary: Create grid row
       x-badges:
         - name: beta
-      operationId: createGridRow
+      operationId: create_grid_row
       description: Create a new grid row in the dashboard.
       tags: [Dashboards]
       parameters:
@@ -1927,7 +1984,7 @@ paths:
       summary: Update grid row
       x-badges:
         - name: beta
-      operationId: updateGridRow
+      operationId: update_grid_row
       description: Update an existing grid row.
       tags: [Dashboards]
       parameters:
@@ -1961,7 +2018,7 @@ paths:
       summary: Delete grid row
       x-badges:
         - name: beta
-      operationId: deleteGridRow
+      operationId: delete_grid_row
       description: Delete a grid row and all its items.
       tags: [Dashboards]
       parameters:
@@ -1987,7 +2044,7 @@ paths:
       summary: Move grid row up
       x-badges:
         - name: beta
-      operationId: moveGridRowUp
+      operationId: move_grid_row_up
       description: Move a grid row up in the dashboard.
       tags: [Dashboards]
       parameters:
@@ -2017,7 +2074,7 @@ paths:
       summary: Move grid row down
       x-badges:
         - name: beta
-      operationId: moveGridRowDown
+      operationId: move_grid_row_down
       description: Move a grid row down in the dashboard.
       tags: [Dashboards]
       parameters:
@@ -2047,7 +2104,7 @@ paths:
       summary: List notification channels
       x-badges:
         - name: beta
-      operationId: listNotificationChannels
+      operationId: list_notification_channels
       description: Retrieve all notification channels for a project.
       tags: [NotificationChannels]
       parameters:
@@ -2078,7 +2135,7 @@ paths:
       summary: Create notification channel
       x-badges:
         - name: beta
-      operationId: createNotificationChannel
+      operationId: create_notification_channel
       description: Create a new notification channel.
       tags: [NotificationChannels]
       parameters:
@@ -2110,7 +2167,7 @@ paths:
       summary: Get notification channel
       x-badges:
         - name: beta
-      operationId: getNotificationChannel
+      operationId: get_notification_channel
       description: Retrieve a specific notification channel by ID.
       tags: [NotificationChannels]
       parameters:
@@ -2137,7 +2194,7 @@ paths:
       summary: Update notification channel
       x-badges:
         - name: beta
-      operationId: updateNotificationChannel
+      operationId: update_notification_channel
       description: Update an existing notification channel.
       tags: [NotificationChannels]
       parameters:
@@ -2170,7 +2227,7 @@ paths:
       summary: Delete notification channel
       x-badges:
         - name: beta
-      operationId: deleteNotificationChannel
+      operationId: delete_notification_channel
       description: Delete an existing notification channel.
       tags: [NotificationChannels]
       parameters:
@@ -2230,7 +2287,7 @@ components:
         type: integer
         format: int64
     TimeStart:
-      name: time_gte
+      name: time_start
       in: query
       required: true
       description: Start time (inclusive) as RFC3339 timestamp.
@@ -2240,7 +2297,7 @@ components:
         description: RFC3339 timestamp.
       example: 2023-07-10T00:00:00Z
     TimeEnd:
-      name: time_lt
+      name: time_end
       in: query
       required: true
       description: End time (exclusive) as RFC3339 timestamp.
@@ -2507,6 +2564,55 @@ components:
           description: Overrides annotation time in RFC3339 format.
       required:
         - name
+    ListDashboardTemplatesResponse:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardTemplateItem"
+      required: [templates]
+
+    DashboardTemplateItem:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Template ID.
+        name:
+          type: string
+          description: Template name.
+        description:
+          type: string
+          description: Template description.
+      required: [id, name, description]
+
+    GetDashboardTemplateResponse:
+      type: object
+      properties:
+        template:
+          $ref: "#/components/schemas/DashboardTemplate"
+      required: [template]
+
+    DashboardTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Template ID.
+        name:
+          type: string
+          description: Template name.
+        description:
+          type: string
+          description: Template description.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Template tags.
+      required: [id, name, description]
+
     ExploreMetricsResponse:
       type: object
       properties:
