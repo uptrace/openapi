@@ -1246,7 +1246,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards:
+  /internal/v1/dashboards/{project_id}:
     get:
       summary: List dashboards
       x-badges:
@@ -1285,7 +1285,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/tags:
+  /internal/v1/dashboards/{project_id}/tags:
     get:
       summary: List dashboard tags
       x-badges:
@@ -1321,7 +1321,23 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/metrics/{project_id}/dashboards/templates:
+  /internal/v1/dashboard-templates/schema:
+    get:
+      summary: Get dashboard template JSON Schema
+      operationId: get_dashboard_template_schema
+      description: >-
+        Get the JSON Schema for validating dashboard template YAML files.
+        Returns the schema as application/schema+json.
+      tags: [Dashboards]
+      responses:
+        "200":
+          description: Dashboard template JSON Schema.
+          content:
+            application/schema+json:
+              schema:
+                type: object
+
+  /internal/v1/dashboard-templates/{project_id}:
     get:
       summary: List dashboard templates
       operationId: list_dashboard_templates
@@ -1346,7 +1362,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-  /internal/v1/metrics/{project_id}/dashboards/templates/{template_id}:
+  /internal/v1/dashboard-templates/{project_id}/{template_id}:
     get:
       summary: Get dashboard template
       operationId: get_dashboard_template
@@ -1491,7 +1507,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-  /internal/v1/projects/{project_id}/dashboards/yaml:
+  /internal/v1/dashboards/{project_id}/yaml:
     post:
       summary: Create dashboard from YAML
       x-badges:
@@ -1534,7 +1550,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}:
     get:
       summary: Get a dashboard
       x-badges:
@@ -1609,7 +1625,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/yaml:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/yaml:
     get:
       summary: Get dashboard YAML
       x-badges:
@@ -1678,7 +1694,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/clone:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/clone:
     post:
       summary: Clone a dashboard
       x-badges:
@@ -1707,7 +1723,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/reset:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/reset:
     put:
       summary: Reset a dashboard
       x-badges:
@@ -1732,7 +1748,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/pinned:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/pinned:
     put:
       summary: Pin a dashboard
       x-badges:
@@ -1757,7 +1773,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/unpinned:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/unpinned:
     put:
       summary: Unpin a dashboard
       x-badges:
@@ -1782,7 +1798,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/table:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/table:
     put:
       summary: Update dashboard table
       x-badges:
@@ -1813,7 +1829,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/grid:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/grid:
     put:
       summary: Update dashboard grid query
       x-badges:
@@ -1880,7 +1896,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/grid/{grid_item_id}:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/grid/{grid_item_id}:
     put:
       summary: Update grid item
       x-badges:
@@ -1944,7 +1960,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/rows:
     post:
       summary: Create grid row
       x-badges:
@@ -1979,7 +1995,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/rows/{row_id}:
     put:
       summary: Update grid row
       x-badges:
@@ -2039,7 +2055,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/up:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/rows/{row_id}/up:
     put:
       summary: Move grid row up
       x-badges:
@@ -2069,7 +2085,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/dashboards/{dashboard_id}/rows/{row_id}/down:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/rows/{row_id}/down:
     put:
       summary: Move grid row down
       x-badges:
