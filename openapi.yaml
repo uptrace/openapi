@@ -3274,7 +3274,7 @@ components:
         id:
           type: integer
           format: int64
-        dashId:
+        dashboardId:
           type: integer
           format: int64
         title:
@@ -3295,7 +3295,7 @@ components:
           type: number
       required:
         - id
-        - dashId
+        - dashboardId
         - title
         - index
 
@@ -3329,10 +3329,10 @@ components:
           type: string
         description:
           type: string
-        dashId:
+        dashboardId:
           type: integer
           format: int64
-        dashKind:
+        dashboardKind:
           type: string
           enum: [grid, table]
         rowId:
@@ -3359,8 +3359,8 @@ components:
       required:
         - id
         - title
-        - dashId
-        - dashKind
+        - dashboardId
+        - dashboardKind
         - type
 
     GridItemRequest:
@@ -3370,7 +3370,7 @@ components:
           type: string
         description:
           type: string
-        dashKind:
+        dashboardKind:
           type: string
           enum: [grid, table]
         rowId:
@@ -3392,7 +3392,7 @@ components:
           additionalProperties: true
       required:
         - title
-        - dashKind
+        - dashboardKind
         - rowId
         - type
 
