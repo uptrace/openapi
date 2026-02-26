@@ -2601,7 +2601,26 @@ components:
         description:
           type: string
           description: Template description.
-      required: [id, name, description]
+        tags:
+          type: array
+          items:
+            type: string
+          description: Template tags.
+        version:
+          type: string
+          description: Template version.
+        setupLink:
+          type: string
+          description: Link to setup instructions.
+        docLink:
+          type: string
+          description: Link to documentation.
+        status:
+          $ref: "#/components/schemas/TemplateStatus"
+        dashboardId:
+          type: integer
+          description: ID of the dashboard created from this template, if any.
+      required: [id, name, description, status]
 
     GetDashboardTemplateResponse:
       type: object
@@ -2627,7 +2646,29 @@ components:
           items:
             type: string
           description: Template tags.
-      required: [id, name, description]
+        version:
+          type: string
+          description: Template version.
+        setupLink:
+          type: string
+          description: Link to setup instructions.
+        docLink:
+          type: string
+          description: Link to documentation.
+        status:
+          $ref: "#/components/schemas/TemplateStatus"
+        dashboardId:
+          type: integer
+          description: ID of the dashboard created from this template, if any.
+        yaml:
+          type: string
+          description: Template YAML definition.
+      required: [id, name, description, status]
+
+    TemplateStatus:
+      type: string
+      description: Template availability status.
+      enum: [ready, pending, installed]
 
     ExploreMetricsResponse:
       type: object
