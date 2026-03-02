@@ -330,7 +330,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: true
-                  order:
+                  sorting:
                     type: array
                     description: Applied sorting configuration.
                     items:
@@ -592,7 +592,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: true
-                  order:
+                  sorting:
                     type: array
                     description: Applied sorting configuration.
                     items:
@@ -893,7 +893,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: true
-                  order:
+                  sorting:
                     type: array
                     description: Applied sorting configuration.
                     items:
@@ -2489,7 +2489,7 @@ components:
           items:
             type: object
             additionalProperties: true
-        order:
+        sorting:
           type: array
           description: Applied sorting configuration.
           items:
@@ -2587,6 +2587,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DashboardTemplateItem"
+        tags:
+          type: array
+          items:
+            type: string
+          description: All unique tags across templates.
       required: [templates]
 
     DashboardTemplateItem:
@@ -2627,6 +2632,9 @@ components:
       properties:
         template:
           $ref: "#/components/schemas/DashboardTemplate"
+        yaml:
+          type: string
+          description: Full dashboard template YAML definition.
       required: [template]
 
     DashboardTemplate:
