@@ -220,7 +220,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/tracing/{project_id}/spans:
+  /internal/v1/spans/{project_id}:
     get:
       summary: List spans
       operationId: list_spans
@@ -366,7 +366,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/tracing/{project_id}/groups:
+  /internal/v1/spans/{project_id}/groups:
     get:
       summary: List groups
       operationId: list_span_groups
@@ -479,7 +479,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/tracing/{project_id}/timeseries:
+  /internal/v1/spans/{project_id}/timeseries:
     get:
       summary: Timeseries
       operationId: query_timeseries
@@ -622,7 +622,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/tracing/{project_id}/quantiles:
+  /internal/v1/spans/{project_id}/quantiles:
     get:
       summary: Quantiles
       operationId: query_quantiles
@@ -723,7 +723,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/tracing/{project_id}/trace-groups:
+  /internal/v1/traces/{project_id}/groups:
     get:
       summary: List trace groups
       operationId: list_trace_groups
@@ -809,7 +809,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/tracing/{project_id}/traces:
+  /internal/v1/traces/{project_id}:
     get:
       summary: List traces
       operationId: list_traces
@@ -1003,7 +1003,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/projects/{project_id}/monitors:
+  /internal/v1/monitors/{project_id}:
     get:
       summary: List monitors
       x-badges:
@@ -1116,7 +1116,7 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
-  /internal/v1/projects/{project_id}/monitors/{monitor_id}:
+  /internal/v1/monitors/{project_id}/{monitor_id}:
     get:
       summary: Get a monitor
       x-badges:
@@ -1417,9 +1417,44 @@ paths:
         - name: search
           in: query
           required: false
-          description: Search string to filter metrics by name.
+          description: Search string to filter metrics by name (substring match).
           schema:
             type: string
+        - name: instrument
+          in: query
+          required: false
+          description: >-
+            Filter by instrument type. Can be repeated to pass multiple values
+            (e.g. instrument=counter&instrument=gauge). Allowed values:
+            histogram, counter, gauge, additive.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["counter"]
+        - name: library_name
+          in: query
+          required: false
+          description: >-
+            Filter by instrumentation library name (exact match). Can be repeated;
+            results match any of the listed libraries.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["go.opentelemetry.io/contrib/instrumentation/runtime"]
+        - name: attr_key_exists
+          in: query
+          required: false
+          description: >-
+            Return only metrics that expose all of the listed attribute keys (AND
+            semantics). Uptrace normalizes attribute keys by replacing dots with
+            underscores (service.name → service_name), so pass the underscored form.
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["host_name"]
       responses:
         "200":
           description: Metrics list.
@@ -1584,7 +1619,7 @@ paths:
                   gridRows:
                     type: array
                     items:
-                      $ref: "#/components/schemas/GridRow"
+                      $ref: "#/components/schemas/GridSection"
                   gridMetrics:
                     type: array
                     items:
@@ -1960,13 +1995,13 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/dashboards/{project_id}/{dashboard_id}/rows:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/sections:
     post:
-      summary: Create grid row
+      summary: Create grid section
       x-badges:
         - name: beta
-      operationId: create_grid_row
-      description: Create a new grid row in the dashboard.
+      operationId: create_grid_section
+      description: Create a new grid section in the dashboard.
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -1976,14 +2011,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GridRowRequest"
+              $ref: "#/components/schemas/GridSectionRequest"
       responses:
         "200":
-          description: Grid row created.
+          description: Grid section created.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GridRowResponse"
+                $ref: "#/components/schemas/GridSectionResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1995,31 +2030,31 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/dashboards/{project_id}/{dashboard_id}/rows/{row_id}:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/sections/{section_id}:
     put:
-      summary: Update grid row
+      summary: Update grid section
       x-badges:
         - name: beta
-      operationId: update_grid_row
-      description: Update an existing grid row.
+      operationId: update_grid_section
+      description: Update an existing grid section.
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
         - $ref: "#/components/parameters/DashboardId"
-        - $ref: "#/components/parameters/RowId"
+        - $ref: "#/components/parameters/SectionId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GridRow"
+              $ref: "#/components/schemas/GridSection"
       responses:
         "200":
-          description: Grid row updated.
+          description: Grid section updated.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GridRowResponse"
+                $ref: "#/components/schemas/GridSectionResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2031,19 +2066,23 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
     delete:
-      summary: Delete grid row
+      summary: Delete grid section
       x-badges:
         - name: beta
-      operationId: delete_grid_row
-      description: Delete a grid row and all its items.
+      operationId: delete_grid_section
+      description: Delete a grid section and all its items.
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
         - $ref: "#/components/parameters/DashboardId"
-        - $ref: "#/components/parameters/RowId"
+        - $ref: "#/components/parameters/SectionId"
       responses:
         "200":
-          description: Grid row deleted.
+          description: Grid section deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GridSectionResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2055,25 +2094,25 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/dashboards/{project_id}/{dashboard_id}/rows/{row_id}/up:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/sections/{section_id}/up:
     put:
-      summary: Move grid row up
+      summary: Move grid section up
       x-badges:
         - name: beta
-      operationId: move_grid_row_up
-      description: Move a grid row up in the dashboard.
+      operationId: move_grid_section_up
+      description: Move a grid section up in the dashboard.
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
         - $ref: "#/components/parameters/DashboardId"
-        - $ref: "#/components/parameters/RowId"
+        - $ref: "#/components/parameters/SectionId"
       responses:
         "200":
-          description: Grid row moved up.
+          description: Grid section moved up.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GridRowResponse"
+                $ref: "#/components/schemas/GridSectionResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2085,25 +2124,25 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /internal/v1/dashboards/{project_id}/{dashboard_id}/rows/{row_id}/down:
+  /internal/v1/dashboards/{project_id}/{dashboard_id}/sections/{section_id}/down:
     put:
-      summary: Move grid row down
+      summary: Move grid section down
       x-badges:
         - name: beta
-      operationId: move_grid_row_down
-      description: Move a grid row down in the dashboard.
+      operationId: move_grid_section_down
+      description: Move a grid section down in the dashboard.
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
         - $ref: "#/components/parameters/DashboardId"
-        - $ref: "#/components/parameters/RowId"
+        - $ref: "#/components/parameters/SectionId"
       responses:
         "200":
-          description: Grid row moved down.
+          description: Grid section moved down.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GridRowResponse"
+                $ref: "#/components/schemas/GridSectionResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2112,6 +2151,173 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/alerts/{project_id}:
+    get:
+      summary: List alerts
+      x-badges:
+        - name: beta
+      operationId: list_alerts
+      description: >-
+        List alerts with optional filtering by status, priority, type, activity state,
+        monitor ID, and free-text search. Returns alerts sorted by most recent event by default.
+      tags: [Alerts]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - name: search
+          in: query
+          description: Free-text search across alert name and attributes. Supports scoped search (e.g., alert.status:resolved).
+          schema:
+            type: string
+        - name: attrs[status][]
+          in: query
+          description: Filter by alert status. Can be repeated for multiple values.
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/AlertStatus"
+        - name: attrs[priority][]
+          in: query
+          description: Filter by alert priority. Can be repeated for multiple values.
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/AlertPriority"
+        - name: attrs[type][]
+          in: query
+          description: Filter by alert type. Can be repeated for multiple values.
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/AlertType"
+        - name: attrs[activityState][]
+          in: query
+          description: Filter by activity state. Can be repeated for multiple values.
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/AlertActivityState"
+        - name: attrs[monitorId][]
+          in: query
+          description: Filter by monitor ID. Can be repeated for multiple values.
+          schema:
+            type: array
+            items:
+              type: integer
+              format: uint64
+        - name: sort_by
+          in: query
+          description: Field to sort by. Defaults to event.created_at.
+          schema:
+            type: string
+          example: created_at
+        - name: sort_dir
+          in: query
+          description: Sort direction. Defaults to DESC.
+          schema:
+            $ref: "#/components/schemas/SortDirection"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: List of alerts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - alerts
+                  - count
+                properties:
+                  alerts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Alert"
+                  count:
+                    type: integer
+                    description: Total number of matching alerts.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/alerts/{project_id}/{alert_id}:
+    get:
+      summary: Get an alert
+      x-badges:
+        - name: beta
+      operationId: get_alert
+      description: Retrieve a specific alert by ID with full event history and assignees.
+      tags: [Alerts]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/AlertId"
+      responses:
+        "200":
+          description: Alert details with event history.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - alert
+                  - events
+                  - assignees
+                properties:
+                  alert:
+                    $ref: "#/components/schemas/Alert"
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AlertEvent"
+                  assignees:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/users/current:
+    get:
+      summary: Get current user
+      x-badges:
+        - name: beta
+      operationId: get_current_user
+      description: >-
+        Retrieve the currently authenticated user and their accessible projects.
+        If no valid authentication is provided, returns a guest user with an empty project list
+        instead of a 401 error.
+      tags: [Users]
+      responses:
+        "200":
+          description: Current user and accessible projects.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                  - projects
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  projects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Project"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -2294,6 +2500,14 @@ components:
       schema:
         type: integer
         format: int64
+    AlertId:
+      name: alert_id
+      in: path
+      required: true
+      description: Alert ID.
+      schema:
+        type: integer
+        format: uint64
     MonitorId:
       name: monitor_id
       in: path
@@ -2355,16 +2569,137 @@ components:
       schema:
         type: integer
         format: int64
-    RowId:
-      name: row_id
+    SectionId:
+      name: section_id
       in: path
       required: true
-      description: Grid row ID.
+      description: Grid section ID.
       schema:
         type: integer
         format: int64
 
   schemas:
+    AlertType:
+      type: string
+      description: Alert type.
+      enum: [error, metric]
+
+    AlertStatus:
+      type: string
+      description: Alert resolution status.
+      enum: [unresolved, resolved, archived]
+
+    AlertActivityState:
+      type: string
+      description: Alert activity state while unresolved.
+      enum: [new, ongoing, escalated, regressed]
+
+    AlertPriority:
+      type: string
+      description: Alert priority level.
+      enum: [info, low, medium, high]
+
+    Alert:
+      type: object
+      description: An alert fired by a monitor.
+      properties:
+        id:
+          type: integer
+          format: uint64
+        projectId:
+          type: integer
+          format: uint32
+        monitorId:
+          type: integer
+          format: uint64
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/AlertType"
+        attrs:
+          type: object
+          additionalProperties: true
+          description: Custom alert attributes.
+        event:
+          $ref: "#/components/schemas/AlertEvent"
+        createdAt:
+          type: integer
+          format: int64
+          description: Unix timestamp (nanoseconds).
+        updatedAt:
+          type: integer
+          format: int64
+          description: Unix timestamp (nanoseconds).
+      required:
+        - id
+        - projectId
+        - name
+        - type
+
+    AlertEvent:
+      type: object
+      description: A lifecycle event on an alert.
+      properties:
+        id:
+          type: integer
+          format: uint64
+        alertId:
+          type: integer
+          format: uint64
+        name:
+          type: string
+          description: "Event type: created, status_changed, state_changed, priority_changed, recurring, note, assigned."
+        status:
+          $ref: "#/components/schemas/AlertStatus"
+        activityState:
+          $ref: "#/components/schemas/AlertActivityState"
+        priority:
+          $ref: "#/components/schemas/AlertPriority"
+        createdAt:
+          type: integer
+          format: int64
+          description: Unix timestamp (nanoseconds).
+      required:
+        - id
+        - alertId
+        - name
+        - status
+
+    User:
+      type: object
+      description: A registered user account.
+      properties:
+        id:
+          type: integer
+          format: uint64
+        name:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+          description: URL to the user's avatar image.
+      required:
+        - id
+        - name
+        - email
+
+    Project:
+      type: object
+      description: A project within an organization.
+      properties:
+        id:
+          type: integer
+          format: uint32
+        orgId:
+          type: integer
+          format: uint64
+        name:
+          type: string
+      required:
+        - id
+        - name
+
     SortDirection:
       type: string
       enum: [ASC, DESC]
@@ -2907,7 +3242,6 @@ components:
             - member
             - collaborator
             - billing_manager
-            - billing-manager
       required:
         - key
         - orgKey
@@ -3198,6 +3532,9 @@ components:
         status:
           type: string
           enum: [active, paused, firing, no_data, disabled]
+        pausedUntil:
+          type: number
+          description: Unix timestamp (nanoseconds) until which the monitor is paused.
         notifyEveryoneByEmail:
           type: boolean
         teamIds:
@@ -3317,7 +3654,7 @@ components:
         sparklineDisabled:
           type: boolean
 
-    GridRow:
+    GridSection:
       type: object
       properties:
         id:
@@ -3348,7 +3685,7 @@ components:
         - title
         - index
 
-    GridRowRequest:
+    GridSectionRequest:
       type: object
       properties:
         title:
@@ -3360,13 +3697,13 @@ components:
       required:
         - title
 
-    GridRowResponse:
+    GridSectionResponse:
       type: object
       properties:
-        gridRow:
-          $ref: "#/components/schemas/GridRow"
+        gridSection:
+          $ref: "#/components/schemas/GridSection"
       required:
-        - gridRow
+        - gridSection
 
     GridItem:
       type: object
@@ -3384,7 +3721,7 @@ components:
         dashboardKind:
           type: string
           enum: [grid, table]
-        rowId:
+        sectionId:
           type: integer
           format: int64
         width:
@@ -3422,17 +3759,9 @@ components:
         dashboardKind:
           type: string
           enum: [grid, table]
-        rowId:
+        sectionId:
           type: integer
           format: int64
-        width:
-          type: integer
-        height:
-          type: integer
-        xAxis:
-          type: integer
-        yAxis:
-          type: integer
         type:
           type: string
           enum: [chart, table, heatmap, gauge]
@@ -3442,7 +3771,7 @@ components:
       required:
         - title
         - dashboardKind
-        - rowId
+        - sectionId
         - type
 
     GridItemResponse:
@@ -3575,6 +3904,60 @@ components:
       required:
         - url
 
+    AlertmanagerParams:
+      type: object
+      description: Alertmanager notification channel params.
+      properties:
+        url:
+          type: string
+          description: Alertmanager API endpoint URL.
+        authMethod:
+          type: string
+          enum: [none, basic_auth, bearer]
+          description: Authentication method.
+        username:
+          type: string
+          description: Username for basic_auth.
+        password:
+          type: string
+          description: Password for basic_auth.
+        token:
+          type: string
+          description: Token for bearer auth.
+      required:
+        - url
+
+    PushoverParams:
+      type: object
+      description: Pushover notification channel params.
+      properties:
+        token:
+          type: string
+        userKey:
+          type: string
+        priority:
+          type: integer
+          description: Priority from -2 (lowest) to 2 (emergency).
+        sound:
+          type: string
+      required:
+        - token
+        - userKey
+
+    IncidentioParams:
+      type: object
+      description: incident.io notification channel params.
+      properties:
+        url:
+          type: string
+          description: Alert Events V2 endpoint URL.
+        apiKey:
+          type: string
+          description: incident.io API key.
+      required:
+        - url
+        - apiKey
+
     NotificationChannel:
       type: object
       properties:
@@ -3598,8 +3981,10 @@ components:
               opsgenie,
               telegram,
               teams,
+              pushover,
               webhook,
               alertmanager,
+              incidentio,
             ]
         status:
           type: string
@@ -3625,7 +4010,10 @@ components:
             - $ref: "#/components/schemas/OpsgenieParams"
             - $ref: "#/components/schemas/TelegramParams"
             - $ref: "#/components/schemas/TeamsParams"
+            - $ref: "#/components/schemas/PushoverParams"
             - $ref: "#/components/schemas/WebhookParams"
+            - $ref: "#/components/schemas/AlertmanagerParams"
+            - $ref: "#/components/schemas/IncidentioParams"
         monitorIds:
           type: array
           items:
@@ -3663,8 +4051,10 @@ components:
               opsgenie,
               telegram,
               teams,
+              pushover,
               webhook,
               alertmanager,
+              incidentio,
             ]
         matchAll:
           type: boolean
@@ -3690,7 +4080,10 @@ components:
             - $ref: "#/components/schemas/OpsgenieParams"
             - $ref: "#/components/schemas/TelegramParams"
             - $ref: "#/components/schemas/TeamsParams"
+            - $ref: "#/components/schemas/PushoverParams"
             - $ref: "#/components/schemas/WebhookParams"
+            - $ref: "#/components/schemas/AlertmanagerParams"
+            - $ref: "#/components/schemas/IncidentioParams"
       required:
         - name
         - type
