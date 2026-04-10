@@ -2352,6 +2352,262 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/orgs:
+    get:
+      summary: List organizations
+      operationId: list_orgs
+      description: List all organizations accessible to the authenticated user.
+      tags: [Organizations]
+      x-badges:
+        - name: beta
+      responses:
+        "200":
+          description: Organizations listed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orgs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Org"
+                required:
+                  - orgs
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      summary: Create organization
+      operationId: create_org
+      description: Create a new organization.
+      tags: [Organizations]
+      x-badges:
+        - name: beta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgCreateRequest"
+      responses:
+        "200":
+          description: Organization created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}:
+    get:
+      summary: Get organization
+      operationId: get_org
+      description: Get organization details.
+      tags: [Organizations]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          description: Organization details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      summary: Update organization
+      operationId: update_org
+      description: Update organization settings.
+      tags: [Organizations]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgUpdateRequest"
+      responses:
+        "200":
+          description: Organization updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete organization
+      operationId: delete_org
+      description: Delete an organization. Fails if the organization contains projects.
+      tags: [Organizations]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          description: Organization deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/projects:
+    get:
+      summary: List organization projects
+      operationId: list_org_projects
+      description: List all projects in an organization.
+      tags: [Organizations]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          description: Projects listed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Project"
+                required:
+                  - projects
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      summary: Create project
+      operationId: create_project
+      description: Create a new project within an organization.
+      tags: [Projects]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreateRequest"
+      responses:
+        "200":
+          description: Project created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/projects/{project_id}:
+    get:
+      summary: Get project
+      operationId: get_project
+      description: Get project details.
+      tags: [Projects]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      summary: Update project
+      operationId: update_project
+      description: Update project settings.
+      tags: [Projects]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreateRequest"
+      responses:
+        "200":
+          description: Project updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete project
+      operationId: delete_project
+      description: Delete a project.
+      tags: [Projects]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project deleted.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /internal/v1/users/current:
     get:
       summary: Get current user
@@ -2562,6 +2818,14 @@ components:
       schema:
         type: integer
         format: int64
+    OrgId:
+      name: org_id
+      in: path
+      required: true
+      description: Organization ID.
+      schema:
+        type: integer
+        format: uint64
     AlertId:
       name: alert_id
       in: path
@@ -2738,13 +3002,84 @@ components:
           type: string
         email:
           type: string
+        emailConfirmed:
+          type: boolean
         avatar:
           type: string
           description: URL to the user's avatar image.
+        emailsMutedUntil:
+          type: number
+          description: Unix timestamp in nanoseconds until emails are muted.
+        otpEnabled:
+          type: boolean
+          description: Whether two-factor authentication is enabled.
+        lastReadAt:
+          type: number
+          description: Unix timestamp in nanoseconds of last read.
+        timeZone:
+          type: string
+          description: IANA time zone (e.g., America/New_York).
+        createdAt:
+          type: number
+          description: Unix timestamp in nanoseconds.
       required:
         - id
         - name
         - email
+
+    Org:
+      type: object
+      description: An organization.
+      properties:
+        id:
+          type: integer
+          format: uint64
+        name:
+          type: string
+        status:
+          type: string
+        budget:
+          type: number
+          format: float64
+        mfaRequired:
+          type: boolean
+        dynamicSampling:
+          type: boolean
+        createdAt:
+          type: number
+          description: Unix timestamp in nanoseconds.
+        updatedAt:
+          type: number
+          description: Unix timestamp in nanoseconds.
+      required:
+        - id
+        - name
+
+    OrgResponse:
+      type: object
+      properties:
+        org:
+          $ref: "#/components/schemas/Org"
+      required:
+        - org
+
+    OrgCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+
+    OrgUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        mfaRequired:
+          type: boolean
+      required:
+        - name
 
     Project:
       type: object
@@ -2758,8 +3093,142 @@ components:
           format: uint64
         name:
           type: string
+        samplingMode:
+          type: string
+          enum: [org_wide, dynamic, disabled, fixed]
+        samplingFraction:
+          type: number
+          format: float64
+        samplingBudget:
+          type: number
+          format: float64
+        suspended:
+          type: boolean
+        groupByEnv:
+          type: boolean
+        groupFuncsByService:
+          type: boolean
+        semconvVersion:
+          type: string
+          enum: [none, "v1.25.0", "v1.33.0"]
+        displayLogSeverity:
+          type: boolean
+        countDistinct:
+          type: boolean
+        spanQuery:
+          type: string
+        spanColumns:
+          type: array
+          items:
+            type: string
+        spanTimeRange:
+          type: string
+          description: Duration string (e.g., 24h).
+        spanRetention:
+          type: string
+          description: Duration string (e.g., 720h).
+        logQuery:
+          type: string
+        logColumns:
+          type: array
+          items:
+            type: string
+        logTimeRange:
+          type: string
+          description: Duration string (e.g., 24h).
+        logRetention:
+          type: string
+          description: Duration string (e.g., 720h).
+        eventQuery:
+          type: string
+        eventColumns:
+          type: array
+          items:
+            type: string
+        eventTimeRange:
+          type: string
+          description: Duration string (e.g., 24h).
+        eventRetention:
+          type: string
+          description: Duration string (e.g., 720h).
+        traceQuery:
+          type: string
+        traceColumns:
+          type: array
+          items:
+            type: string
+        traceTimeRange:
+          type: string
+          description: Duration string (e.g., 24h).
+        metricRetention:
+          type: string
+          description: Duration string (e.g., 720h).
+        metricGranularity:
+          type: string
+          description: Duration string (e.g., 1m).
+        createdAt:
+          type: number
+          description: Unix timestamp in nanoseconds.
+        updatedAt:
+          type: number
+          description: Unix timestamp in nanoseconds.
+        orgName:
+          type: string
+        mfaRequired:
+          type: boolean
       required:
         - id
+        - name
+
+    ProjectResponse:
+      type: object
+      properties:
+        project:
+          $ref: "#/components/schemas/Project"
+      required:
+        - project
+
+    ProjectCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        groupByEnv:
+          type: boolean
+        groupFuncsByService:
+          type: boolean
+        semconvVersion:
+          type: string
+          enum: [none, "v1.25.0", "v1.33.0"]
+        displayLogSeverity:
+          type: boolean
+        countDistinct:
+          type: boolean
+        spanTimeRange:
+          type: string
+          description: Duration string (e.g., 24h).
+        logTimeRange:
+          type: string
+          description: Duration string (e.g., 24h).
+        eventTimeRange:
+          type: string
+          description: Duration string (e.g., 24h).
+        spanRetention:
+          type: string
+          description: Duration string (e.g., 720h).
+        logRetention:
+          type: string
+          description: Duration string (e.g., 720h).
+        eventRetention:
+          type: string
+          description: Duration string (e.g., 720h).
+        metricRetention:
+          type: string
+          description: Duration string (e.g., 720h).
+        metricGranularity:
+          type: string
+          description: Duration string (e.g., 1m).
+      required:
         - name
 
     SortDirection:
