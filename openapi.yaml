@@ -1761,7 +1761,11 @@ paths:
         - $ref: "#/components/parameters/DashboardId"
       responses:
         "200":
-          description: Dashboard deleted.
+          description: Dashboard deleted. Returns the deleted dashboard.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
