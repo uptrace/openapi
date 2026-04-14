@@ -2586,7 +2586,11 @@ paths:
         - $ref: "#/components/parameters/OrgId"
       responses:
         "200":
-          description: Organization deleted.
+          description: Organization deleted. Returns the deleted organization.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2717,7 +2721,11 @@ paths:
         - $ref: "#/components/parameters/ProjectId"
       responses:
         "200":
-          description: Project deleted.
+          description: Project deleted. Returns the deleted project.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -3157,7 +3165,7 @@ components:
           type: string
         budget:
           type: number
-          format: float64
+          format: double
         mfaRequired:
           type: boolean
         dynamicSampling:
@@ -3187,7 +3195,7 @@ components:
           type: string
         budget:
           type: number
-          format: float64
+          format: double
           description: Organization budget. Defaults to the system default if not set.
       required:
         - name
@@ -3199,6 +3207,10 @@ components:
           type: string
         mfaRequired:
           type: boolean
+        budget:
+          type: number
+          format: double
+          description: Organization budget.
       required:
         - name
 
