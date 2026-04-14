@@ -3068,6 +3068,10 @@ components:
       properties:
         name:
           type: string
+        budget:
+          type: number
+          format: float64
+          description: Organization budget. Defaults to the system default if not set.
       required:
         - name
 
