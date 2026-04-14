@@ -1076,10 +1076,13 @@ paths:
                     query:
                       "perMin(count($spans)) as spans | where service_name =
                       'myservice'"
-                    columnName: spans
-                    minAllowedValue: 100
-                    maxAllowedValue: 1000
-                    nullsMode: convert
+                    column:
+                      name: spans
+                    detector:
+                      type: manual
+                      params:
+                        minValue: 100
+                        maxValue: 1000
               errorMonitor:
                 summary: Error monitor
                 value:
@@ -1180,10 +1183,13 @@ paths:
                     query:
                       "perMin(count($spans)) as spans | where service_name =
                       'myservice'"
-                    columnName: spans
-                    minAllowedValue: 100
-                    maxAllowedValue: 1000
-                    nullsMode: convert
+                    column:
+                      name: spans
+                    detector:
+                      type: manual
+                      params:
+                        minValue: 100
+                        maxValue: 1000
               errorMonitor:
                 summary: Error monitor
                 value:
@@ -3167,9 +3173,6 @@ components:
         metricRetention:
           type: string
           description: Duration string (e.g., 720h).
-        metricGranularity:
-          type: string
-          description: Duration string (e.g., 1m).
         createdAt:
           type: number
           description: Unix timestamp in nanoseconds.
@@ -3229,9 +3232,6 @@ components:
         metricRetention:
           type: string
           description: Duration string (e.g., 720h).
-        metricGranularity:
-          type: string
-          description: Duration string (e.g., 1m).
       required:
         - name
 
@@ -3916,26 +3916,55 @@ components:
             $ref: "#/components/schemas/MonitorMetric"
         query:
           type: string
-        columnName:
-          type: string
-        columnUnit:
-          type: string
-        boundsSource:
-          type: string
-          enum:
-            - manual
-            - auto
+        column:
+          $ref: "#/components/schemas/Column"
         resolution:
           type: number
           description: Resolution in milliseconds.
         numEvalPoints:
           type: integer
-        minAllowedValue:
+        absentPoints:
+          type: string
+          enum:
+            - zero
+            - ignore
+            - alert
+        timeOffset:
           type: number
-        maxAllowedValue:
+          description: Time offset in milliseconds.
+        detector:
+          $ref: "#/components/schemas/DetectorConfig"
+      required:
+        - metrics
+        - query
+        - detector
+    DetectorConfig:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - manual
+            - auto
+        params:
+          oneOf:
+            - $ref: "#/components/schemas/ManualDetectorParams"
+            - $ref: "#/components/schemas/AutoDetectorParams"
+      required:
+        - type
+        - params
+    ManualDetectorParams:
+      type: object
+      properties:
+        minValue:
           type: number
-        flapping:
-          $ref: "#/components/schemas/FlappingParams"
+        maxValue:
+          type: number
+        recovery:
+          $ref: "#/components/schemas/Recovery"
+    AutoDetectorParams:
+      type: object
+      properties:
         tolerance:
           type: string
           enum:
@@ -3947,20 +3976,8 @@ components:
           description: Training period in milliseconds.
         minDevFraction:
           type: number
-        minDevValue:
+        minDevAbsolute:
           type: number
-        nullsMode:
-          type: string
-          enum:
-            - allow
-            - forbid
-            - convert
-        timeOffset:
-          type: number
-          description: Time offset in milliseconds.
-      required:
-        - metrics
-        - query
     ErrorMonitorParams:
       type: object
       properties:
@@ -3973,12 +3990,21 @@ components:
       required:
         - metrics
         - query
-    FlappingParams:
+    Column:
       type: object
       properties:
-        minAllowedValue:
+        name:
+          type: string
+          description: Name of the query result column being monitored.
+        unit:
+          type: string
+          description: Display unit for the column values (e.g. "milliseconds", "bytes").
+    Recovery:
+      type: object
+      properties:
+        minValue:
           type: number
-        maxAllowedValue:
+        maxValue:
           type: number
     MonitorMetric:
       type: object
