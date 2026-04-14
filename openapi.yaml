@@ -1029,6 +1029,30 @@ paths:
       tags: [Monitors]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
+        - name: search
+          in: query
+          required: false
+          description: Free-text search applied to monitor names and attributes.
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: Filter monitors by status (e.g. active, paused, failing).
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          required: false
+          description: Column to sort by.
+          schema:
+            type: string
+        - name: sort_dir
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SortDirection"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
           description: List of monitors.
@@ -1043,6 +1067,21 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Monitor"
+                  statuses:
+                    type: array
+                    description: Per-status monitor counts across the project (ignores the status filter).
+                    items:
+                      $ref: "#/components/schemas/MonitorStatusCount"
+                  count:
+                    type: integer
+                    format: int64
+                    description: Total number of monitors matching the current filter.
+                  search:
+                    type: array
+                    description: Parsed search matchers applied to the request.
+                    items:
+                      type: object
+                      additionalProperties: true
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1250,7 +1289,11 @@ paths:
         - $ref: "#/components/parameters/MonitorId"
       responses:
         "200":
-          description: Monitor deleted.
+          description: Monitor deleted. Returns the deleted monitor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1278,6 +1321,37 @@ paths:
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
+        - name: q
+          in: query
+          required: false
+          description: Free-text search applied to dashboard name and indexed columns.
+          schema:
+            type: string
+        - name: pinned
+          in: query
+          required: false
+          description: When true, return only pinned dashboards.
+          schema:
+            type: boolean
+        - name: tag
+          in: query
+          required: false
+          description: Filter by dashboard tag. Repeat to match any of multiple tags.
+          schema:
+            type: array
+            items:
+              type: string
+        - name: sort_by
+          in: query
+          required: false
+          description: Column to sort by (e.g. name, updatedAt). Defaults to updatedAt.
+          schema:
+            type: string
+        - name: sort_dir
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SortDirection"
       responses:
         "200":
           description: List of dashboards.
@@ -1292,6 +1366,9 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Dashboard"
+                  noData:
+                    type: boolean
+                    description: True when no dashboards exist for the project at all (independent of the current filter).
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1364,6 +1441,26 @@ paths:
       tags: [Dashboards]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
+        - name: q
+          in: query
+          required: false
+          description: Free-text search applied to template name and description.
+          schema:
+            type: string
+        - name: tag
+          in: query
+          required: false
+          description: Filter by template tag. Repeat to match any of multiple tags.
+          schema:
+            type: array
+            items:
+              type: string
+        - name: status
+          in: query
+          required: false
+          description: Filter by template status.
+          schema:
+            $ref: "#/components/schemas/TemplateStatus"
       responses:
         "200":
           description: Dashboard templates list.
@@ -3502,7 +3599,22 @@ components:
           items:
             type: string
           description: All unique tags across templates.
+        statuses:
+          type: array
+          description: Per-status counts across the project (ignores the status filter).
+          items:
+            $ref: "#/components/schemas/TemplateStatusCount"
       required: [templates]
+
+    TemplateStatusCount:
+      type: object
+      description: Number of dashboard templates in a given status.
+      properties:
+        status:
+          $ref: "#/components/schemas/TemplateStatus"
+        count:
+          type: integer
+      required: [status, count]
 
     DashboardTemplateItem:
       type: object
@@ -3597,6 +3709,12 @@ components:
             $ref: "#/components/schemas/ExploredMetric"
         hasMore:
           type: boolean
+        search:
+          type: array
+          description: Parsed search matchers applied to the request.
+          items:
+            type: object
+            additionalProperties: true
       required: [metrics, hasMore]
 
     ExploredMetric:
@@ -3638,6 +3756,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetricAttributeKey"
+        noData:
+          type: boolean
+          description: True when no attributes exist for the project at all (independent of the current filter).
+        whereAttrs:
+          type: object
+          description: Map of WHERE attribute names to their matched values, derived from the parsed query.
+          additionalProperties: true
       required: [items]
 
     MetricAttributeKey:
@@ -3646,6 +3771,12 @@ components:
         value:
           type: string
           description: "Attribute key with type suffix (e.g. host_name::str)."
+        title:
+          type: string
+          description: Display label for the attribute. When empty, clients fall back to value.
+        subtitle:
+          type: string
+          description: Additional context shown below the title in autocomplete lists.
         kind:
           type: string
           description: "Attribute type: str, int, float."
@@ -3658,7 +3789,7 @@ components:
         count:
           type: integer
           description: Number of metrics using this attribute.
-      required: [value, kind, count]
+      required: [value, kind]
 
     ListMetricAttributeValuesResponse:
       type: object
@@ -3900,6 +4031,16 @@ components:
           $ref: "#/components/schemas/Monitor"
       required:
         - monitor
+    MonitorStatusCount:
+      type: object
+      description: Number of monitors in a given status.
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+      required: [status, count]
+
     BaseMonitorRequest:
       type: object
       properties:
@@ -3917,6 +4058,14 @@ components:
             type: integer
         repeatInterval:
           $ref: "#/components/schemas/RepeatInterval"
+        trendAggFunc:
+          type: string
+          description: Aggregation function used to compute the trend baseline.
+          enum: [sum, avg, median, last]
+        trendSensitivity:
+          type: string
+          description: Sensitivity level of the trend-based anomaly detector.
+          enum: [low, medium, high]
       required:
         - name
     MetricMonitorRequest:
@@ -4125,8 +4274,19 @@ components:
         id:
           type: integer
           format: int64
+        projectId:
+          type: integer
+          format: int64
+        key:
+          type: string
+          description: >-
+            Deduplication key set when the monitor is created from a YAML dashboard template.
+            Empty for monitors created via the UI. When non-empty, (project_id, key) is unique.
         name:
           type: string
+        isNameTemplated:
+          type: boolean
+          description: True when the name contains template placeholders that are expanded at evaluation time.
         type:
           type: string
           enum: [metric, error]
@@ -4135,7 +4295,10 @@ components:
           enum: [active, paused, firing, no_data, disabled]
         pausedUntil:
           type: number
-          description: Unix timestamp (nanoseconds) until which the monitor is paused.
+          description: Unix timestamp (nanoseconds) until which the monitor is paused. Set when status=paused.
+        error:
+          type: string
+          description: Last error message that caused the monitor to be disabled. Set when status=disabled.
         notifyEveryoneByEmail:
           type: boolean
         teamIds:
@@ -4151,10 +4314,27 @@ components:
         params:
           type: object
           additionalProperties: true
+        trendAggFunc:
+          type: string
+          description: Aggregation function used to compute the trend baseline.
+          enum: [sum, avg, median, last]
+        trendSensitivity:
+          type: string
+          description: Sensitivity level of the trend-based anomaly detector.
+          enum: [low, medium, high]
+        trendUpdatedAt:
+          type: number
+          description: Unix timestamp (nanoseconds) when the trend baseline was last refreshed.
         createdAt:
           type: number
         updatedAt:
           type: number
+        checkedAt:
+          type: number
+          description: Unix timestamp (nanoseconds) when the monitor was last evaluated.
+        nextCheckTime:
+          type: number
+          description: Unix timestamp (nanoseconds) when the monitor is scheduled to be evaluated next.
       required:
         - id
         - name
@@ -4172,32 +4352,48 @@ components:
           format: int64
         templateId:
           type: string
+          description: ID of the dashboard template this dashboard was created from, if any.
         name:
           type: string
+        version:
+          type: string
+          description: Dashboard schema version, set when the dashboard is created from a template.
         pinned:
           type: boolean
-        minInterval:
-          type: number
-        timeOffset:
-          type: number
-        gridQuery:
-          type: string
-        gridMaxWidth:
-          type: integer
-        tableMetrics:
+        tags:
           type: array
-          items:
-            $ref: "#/components/schemas/MetricAlias"
-        tableQuery:
-          type: string
-        tableGrouping:
-          type: array
+          description: Tags used to categorize and filter dashboards.
           items:
             type: string
-        tableColumnMap:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/TableColumn"
+        sortingOrder:
+          type: integer
+          format: int64
+          description: Manual sort order applied when listing dashboards.
+        minInterval:
+          type: number
+          description: Minimum query interval in nanoseconds.
+        timeOffset:
+          type: number
+          description: Default time offset applied to queries in nanoseconds.
+        tooltipsConnected:
+          type: boolean
+          description: When true, hovering a chart highlights the same timestamp on all charts in the dashboard.
+        defaultTimePeriod:
+          type: number
+          description: Default time period in nanoseconds applied when the dashboard is opened without an explicit range.
+        table:
+          $ref: "#/components/schemas/TableGridItemParams"
+        gridMaxWidth:
+          type: integer
+        gridQuery:
+          type: string
+        gridVariables:
+          type: array
+          description: >-
+            Attribute names used as filter variables in the Grid tab. When empty, the
+            grouping attributes from the table are used instead.
+          items:
+            type: string
         createdAt:
           type: number
         updatedAt:
@@ -4206,6 +4402,47 @@ components:
         - id
         - projectId
         - name
+
+    TableGridItemParams:
+      type: object
+      description: Configuration for the Table tab of a dashboard.
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricAlias"
+        query:
+          type: string
+        groupingAttrs:
+          type: array
+          description: Grouping attributes extracted from the query.
+          items:
+            type: string
+        overrides:
+          type: array
+          description: Per-column visual overrides.
+          items:
+            type: object
+            additionalProperties: true
+        variables:
+          type: array
+          items:
+            type: string
+        itemsPerPage:
+          type: integer
+        compactTable:
+          type: boolean
+        linesPerRow:
+          type: integer
+        nullsMode:
+          type: string
+          description: How null values are rendered in the table.
+        sortBy:
+          type: array
+          description: Column sort order applied to the table.
+          items:
+            type: object
+            additionalProperties: true
 
     DashboardResponse:
       type: object
