@@ -893,6 +893,16 @@ paths:
                     items:
                       type: object
                       additionalProperties: true
+                  join:
+                    type: array
+                    description: >-
+                      Parsed sub-query clauses for each non-root joined alias. One entry
+                      per non-root sub-query passed in query[]/alias[]/system[].
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        additionalProperties: true
                   sorting:
                     type: array
                     description: Applied sorting configuration.
@@ -3359,6 +3369,16 @@ components:
           items:
             type: object
             additionalProperties: true
+        join:
+          type: array
+          description: >-
+            Parsed sub-query clauses for each joined alias. Populated only by
+            list_trace_groups (one entry per non-root sub-query); empty for span groups.
+          items:
+            type: array
+            items:
+              type: object
+              additionalProperties: true
         sorting:
           type: array
           description: Applied sorting configuration.
@@ -3448,8 +3468,28 @@ components:
           type: string
           format: date-time
           description: Overrides annotation time in RFC3339 format.
+        closeAlerts:
+          $ref: "#/components/schemas/CloseAlertsParams"
       required:
         - name
+
+    CloseAlertsParams:
+      type: object
+      description: >-
+        Optional directive to close matching open alerts when the annotation is created.
+        Alerts whose type matches and whose attributes contain all key/value pairs in attrs are closed.
+      properties:
+        type:
+          type: string
+          description: Alert type to close.
+          enum: [error, metric]
+        attrs:
+          type: object
+          additionalProperties:
+            type: string
+          description: Attribute key/value pairs that an alert must match to be closed.
+      required:
+        - type
     ListDashboardTemplatesResponse:
       type: object
       properties:
