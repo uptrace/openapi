@@ -2600,6 +2600,38 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/orgs/{org_id}/budget:
+    put:
+      summary: Update organization budget
+      operationId: update_org_budget
+      description: Update the organization's budget. Values below the minimum budget are clamped to the minimum.
+      tags: [Organizations]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgUpdateBudgetRequest"
+      responses:
+        "200":
+          description: Budget updated. Returns the updated organization.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /internal/v1/orgs/{org_id}/projects:
     get:
       summary: List organization projects
@@ -3207,12 +3239,18 @@ components:
           type: string
         mfaRequired:
           type: boolean
+      required:
+        - name
+
+    OrgUpdateBudgetRequest:
+      type: object
+      properties:
         budget:
           type: number
           format: double
-          description: Organization budget.
+          description: Organization budget. Values below the minimum are clamped.
       required:
-        - name
+        - budget
 
     Project:
       type: object
