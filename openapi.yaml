@@ -3293,11 +3293,13 @@ components:
           items:
             type: string
         spanTimeRange:
-          type: string
-          description: Duration string (e.g., 24h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
         spanRetention:
-          type: string
-          description: Duration string (e.g., 720h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
         logQuery:
           type: string
         logColumns:
@@ -3305,11 +3307,13 @@ components:
           items:
             type: string
         logTimeRange:
-          type: string
-          description: Duration string (e.g., 24h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
         logRetention:
-          type: string
-          description: Duration string (e.g., 720h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
         eventQuery:
           type: string
         eventColumns:
@@ -3317,11 +3321,13 @@ components:
           items:
             type: string
         eventTimeRange:
-          type: string
-          description: Duration string (e.g., 24h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
         eventRetention:
-          type: string
-          description: Duration string (e.g., 720h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
         traceQuery:
           type: string
         traceColumns:
@@ -3329,11 +3335,13 @@ components:
           items:
             type: string
         traceTimeRange:
-          type: string
-          description: Duration string (e.g., 24h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
         metricRetention:
-          type: string
-          description: Duration string (e.g., 720h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
         createdAt:
           type: number
           description: Unix timestamp in nanoseconds.
@@ -3373,26 +3381,33 @@ components:
         countDistinct:
           type: boolean
         spanTimeRange:
-          type: string
-          description: Duration string (e.g., 24h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
         logTimeRange:
-          type: string
-          description: Duration string (e.g., 24h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
         eventTimeRange:
-          type: string
-          description: Duration string (e.g., 24h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
         spanRetention:
-          type: string
-          description: Duration string (e.g., 720h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
         logRetention:
-          type: string
-          description: Duration string (e.g., 720h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
         eventRetention:
-          type: string
-          description: Duration string (e.g., 720h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
         metricRetention:
-          type: string
-          description: Duration string (e.g., 720h).
+          type: integer
+          format: int64
+          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
       required:
         - name
 
