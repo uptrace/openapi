@@ -3293,13 +3293,13 @@ components:
           items:
             type: string
         spanTimeRange:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 86400000 for 24h).
         spanRetention:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 2592000000 for 720h).
         logQuery:
           type: string
         logColumns:
@@ -3307,13 +3307,13 @@ components:
           items:
             type: string
         logTimeRange:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 86400000 for 24h).
         logRetention:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 2592000000 for 720h).
         eventQuery:
           type: string
         eventColumns:
@@ -3321,13 +3321,13 @@ components:
           items:
             type: string
         eventTimeRange:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 86400000 for 24h).
         eventRetention:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 2592000000 for 720h).
         traceQuery:
           type: string
         traceColumns:
@@ -3335,13 +3335,13 @@ components:
           items:
             type: string
         traceTimeRange:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 86400000 for 24h).
         metricRetention:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 2592000000 for 720h).
         createdAt:
           type: number
           description: Unix timestamp in nanoseconds.
@@ -3381,33 +3381,33 @@ components:
         countDistinct:
           type: boolean
         spanTimeRange:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 86400000 for 24h).
         logTimeRange:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 86400000 for 24h).
         eventTimeRange:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 86400000000000 for 24h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 86400000 for 24h).
         spanRetention:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 2592000000 for 720h).
         logRetention:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 2592000000 for 720h).
         eventRetention:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 2592000000 for 720h).
         metricRetention:
-          type: integer
-          format: int64
-          description: Duration in nanoseconds (e.g., 2592000000000000 for 720h).
+          type: number
+          format: double
+          description: Duration in milliseconds (e.g., 2592000000 for 720h).
       required:
         - name
 
