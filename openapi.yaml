@@ -2804,6 +2804,12 @@ paths:
         - name: beta
       parameters:
         - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectTokenCreateRequest"
       responses:
         "200":
           description: Project token created.
@@ -5178,6 +5184,13 @@ components:
         - id
         - projectId
         - token
+
+    ProjectTokenCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Human-readable token name.
 
     ProjectTokenUpdateRequest:
       type: object
