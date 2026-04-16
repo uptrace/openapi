@@ -2765,6 +2765,142 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/projects/{project_id}/tokens:
+    get:
+      summary: List project tokens
+      operationId: list_project_tokens
+      description: Retrieve all tokens for a project.
+      tags: [ProjectTokens]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: List of project tokens.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - tokens
+                properties:
+                  tokens:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProjectToken"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      summary: Create project token
+      operationId: create_project_token
+      description: Create a new token for a project. The token string is generated server-side.
+      tags: [ProjectTokens]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project token created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectTokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/projects/{project_id}/tokens/{token_id}:
+    get:
+      summary: Get project token
+      operationId: get_project_token
+      description: Retrieve a specific project token by ID.
+      tags: [ProjectTokens]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TokenId"
+      responses:
+        "200":
+          description: Project token details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectTokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      summary: Update project token
+      operationId: update_project_token
+      description: Update a project token's name.
+      tags: [ProjectTokens]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TokenId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectTokenUpdateRequest"
+      responses:
+        "200":
+          description: Project token updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectTokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete project token
+      operationId: delete_project_token
+      description: Delete a project token.
+      tags: [ProjectTokens]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TokenId"
+      responses:
+        "200":
+          description: Project token deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectTokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /internal/v1/users/current:
     get:
       summary: Get current user
@@ -3036,6 +3172,14 @@ components:
       schema:
         type: integer
         format: int64
+    TokenId:
+      name: token_id
+      in: path
+      required: true
+      description: Project token ID.
+      schema:
+        type: integer
+        format: uint64
     ChannelId:
       name: channel_id
       in: path
@@ -5004,6 +5148,53 @@ components:
           $ref: "#/components/schemas/NotificationChannel"
       required:
         - channel
+
+    ProjectToken:
+      type: object
+      description: A project authentication token with its computed DSN.
+      properties:
+        id:
+          type: integer
+          format: uint64
+          description: Token ID.
+        projectId:
+          type: integer
+          format: uint32
+          description: Project ID this token belongs to.
+        name:
+          type: string
+          description: Human-readable token name.
+        token:
+          type: string
+          description: The secret token string.
+        dsn:
+          type: string
+          description: Computed DSN (ingest URL with token embedded).
+        createdAt:
+          type: number
+          format: float
+          description: Unix timestamp in nanoseconds.
+      required:
+        - id
+        - projectId
+        - token
+
+    ProjectTokenUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Human-readable token name.
+      required:
+        - name
+
+    ProjectTokenResponse:
+      type: object
+      properties:
+        token:
+          $ref: "#/components/schemas/ProjectToken"
+      required:
+        - token
 
   responses:
     BadRequest:
