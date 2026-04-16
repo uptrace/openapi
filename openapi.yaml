@@ -3116,7 +3116,7 @@ components:
       description: Uptrace project ID.
       schema:
         type: integer
-        format: int64
+        format: uint32
     OrgId:
       name: org_id
       in: path
