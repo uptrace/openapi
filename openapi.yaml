@@ -2689,6 +2689,322 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/orgs/{org_id}/teams:
+    get:
+      summary: List organization teams
+      operationId: list_teams
+      description: List all teams in an organization. Teams are a Premium feature; non-admin callers receive an empty list.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          description: Teams listed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teams:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Team"
+                required:
+                  - teams
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      summary: Create team
+      operationId: create_team
+      description: Create a new team in an organization. Requires org admin.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamCreateRequest"
+      responses:
+        "200":
+          description: Team created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/teams/{team_id}:
+    get:
+      summary: Get team
+      operationId: get_team
+      description: Get team details.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "200":
+          description: Team details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      summary: Update team
+      operationId: update_team
+      description: >-
+        Update a team's name and permission level. Requires org admin.
+        Omitting or sending an empty `name` preserves the existing value.
+        Omitting `permLevel` clears it to null.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamUpdateRequest"
+      responses:
+        "200":
+          description: Team updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete team
+      operationId: delete_team
+      description: Delete a team. Requires org admin. Response body is empty.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "200":
+          description: Team deleted.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/teams/{team_id}/projects:
+    get:
+      summary: List team projects
+      operationId: list_team_projects
+      description: List all projects a team has access to.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "200":
+          description: Projects listed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Project"
+                required:
+                  - projects
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/teams/{team_id}/projects/{project_id}:
+    post:
+      summary: Add project to team
+      operationId: add_team_project
+      description: >-
+        Grant a team access to a project. Idempotent (no-op if already added).
+        Requires org admin plus `CanInviteUsers` on the project.
+        Request body is required but its `permLevel` field is currently accepted and ignored server-side.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamProjectAddRequest"
+      responses:
+        "200":
+          description: Project added to team. Response body is empty.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Remove project from team
+      operationId: remove_team_project
+      description: Revoke a team's access to a project. Requires org admin plus `CanInviteUsers` on the project.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project removed from team. Response body is empty.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/teams/{team_id}/users:
+    get:
+      summary: List team users
+      operationId: list_team_users
+      description: List all users that belong to a team.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "200":
+          description: Team users listed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TeamUser"
+                required:
+                  - users
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/teams/{team_id}/users/{org_user_id}:
+    post:
+      summary: Add user to team
+      operationId: add_team_user
+      description: Add an organization user to a team. Idempotent. Requires org admin.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/OrgUserId"
+      responses:
+        "200":
+          description: User added to team. Response body is empty.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Remove user from team
+      operationId: remove_team_user
+      description: Remove a user from a team. Requires org admin.
+      tags: [Teams]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/OrgUserId"
+      responses:
+        "200":
+          description: User removed from team. Response body is empty.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /internal/v1/projects/{project_id}:
     get:
       summary: Get project
@@ -3194,6 +3510,22 @@ components:
       schema:
         type: integer
         format: int64
+    TeamId:
+      name: team_id
+      in: path
+      required: true
+      description: Team ID.
+      schema:
+        type: integer
+        format: uint64
+    OrgUserId:
+      name: org_user_id
+      in: path
+      required: true
+      description: Organization user ID.
+      schema:
+        type: integer
+        format: uint64
     GridItemId:
       name: grid_item_id
       in: path
@@ -5208,6 +5540,106 @@ components:
           $ref: "#/components/schemas/ProjectToken"
       required:
         - token
+
+    PermLevel:
+      type: string
+      description: Project-level permission override (empty when unset).
+      enum:
+        - none
+        - view
+        - edit
+        - admin
+
+    Team:
+      type: object
+      description: A team groups users for project-scoped access control within an organization.
+      properties:
+        id:
+          type: integer
+          format: uint64
+        orgId:
+          type: integer
+          format: uint64
+        name:
+          type: string
+        permLevel:
+          $ref: "#/components/schemas/PermLevel"
+        createdAt:
+          type: number
+          description: Unix timestamp in milliseconds.
+        numUser:
+          type: integer
+          format: uint64
+          description: Number of users in the team. Populated only on list responses.
+        numProject:
+          type: integer
+          format: uint64
+          description: Number of projects the team has access to. Populated only on list responses.
+      required:
+        - id
+        - orgId
+        - name
+
+    TeamResponse:
+      type: object
+      properties:
+        team:
+          $ref: "#/components/schemas/Team"
+      required:
+        - team
+
+    TeamCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        permLevel:
+          $ref: "#/components/schemas/PermLevel"
+      required:
+        - name
+
+    TeamUpdateRequest:
+      type: object
+      description: >-
+        Omitting or sending an empty `name` preserves the existing name.
+        Omitting `permLevel` clears it to null.
+      properties:
+        name:
+          type: string
+        permLevel:
+          $ref: "#/components/schemas/PermLevel"
+
+    TeamUser:
+      type: object
+      description: A user that belongs to a team.
+      properties:
+        id:
+          type: integer
+          format: uint64
+          description: User ID.
+        name:
+          type: string
+        email:
+          type: string
+        orgUserId:
+          type: integer
+          format: uint64
+          description: OrgUser ID. Use this value to add or remove the user via team-user endpoints.
+      required:
+        - id
+        - name
+        - email
+        - orgUserId
+
+    TeamProjectAddRequest:
+      type: object
+      description: >-
+        Request body for adding a project to a team. A non-empty JSON body is required
+        so the server can decode it. The `permLevel` field is accepted but currently
+        ignored by the backend.
+      properties:
+        permLevel:
+          $ref: "#/components/schemas/PermLevel"
 
   responses:
     BadRequest:
