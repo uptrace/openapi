@@ -2784,7 +2784,6 @@ paths:
       description: >-
         Remove a user from an organization. Requires org admin. Also cancels any
         pending invitations for the user's email in this organization.
-        Response body is empty.
       tags: [Users]
       x-badges:
         - name: beta
@@ -2793,7 +2792,11 @@ paths:
         - $ref: "#/components/parameters/OrgUserId"
       responses:
         "200":
-          description: User removed from organization.
+          description: User removed from organization. Returns an empty object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
