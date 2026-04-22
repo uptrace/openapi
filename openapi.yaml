@@ -2781,8 +2781,8 @@ paths:
       operationId: update_team
       description: >-
         Update a team's name and permission level. Requires org admin.
-        Omitting or sending an empty `name` preserves the existing value.
-        Omitting `permLevel` clears it to null.
+        Omitting or sending an empty `name` or `permLevel` preserves the
+        existing value for that field.
       tags: [Teams]
       x-badges:
         - name: beta
@@ -2815,7 +2815,7 @@ paths:
     delete:
       summary: Delete team
       operationId: delete_team
-      description: Delete a team. Requires org admin. Response body is empty.
+      description: Delete a team. Requires org admin. Returns the deleted team.
       tags: [Teams]
       x-badges:
         - name: beta
@@ -2824,7 +2824,11 @@ paths:
         - $ref: "#/components/parameters/TeamId"
       responses:
         "200":
-          description: Team deleted.
+          description: Team deleted. Returns the deleted team.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2891,7 +2895,11 @@ paths:
               $ref: "#/components/schemas/TeamProjectAddRequest"
       responses:
         "200":
-          description: Project added to team. Response body is empty.
+          description: Project added to team. Returns an empty object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2915,7 +2923,11 @@ paths:
         - $ref: "#/components/parameters/ProjectId"
       responses:
         "200":
-          description: Project removed from team. Response body is empty.
+          description: Project removed from team. Returns an empty object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2973,7 +2985,11 @@ paths:
         - $ref: "#/components/parameters/OrgUserId"
       responses:
         "200":
-          description: User added to team. Response body is empty.
+          description: User added to team. Returns an empty object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2995,7 +3011,11 @@ paths:
         - $ref: "#/components/parameters/OrgUserId"
       responses:
         "200":
-          description: User removed from team. Response body is empty.
+          description: User removed from team. Returns an empty object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -5640,6 +5660,10 @@ components:
       properties:
         permLevel:
           $ref: "#/components/schemas/PermLevel"
+
+    EmptyResponse:
+      type: object
+      description: Empty JSON object `{}`. Returned by operations that have no resource to return on success.
 
   responses:
     BadRequest:
