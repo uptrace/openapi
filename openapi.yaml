@@ -2689,6 +2689,245 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/orgs/{org_id}/users:
+    get:
+      summary: List organization users
+      operationId: list_org_users
+      description: List all users that belong to an organization.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - name: email
+          in: query
+          required: false
+          description: Case-insensitive substring match against user email.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Users listed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgUserListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/users/{org_user_id}:
+    get:
+      summary: Get organization user
+      operationId: get_org_user
+      description: Get detailed information about an organization user, including their project and team memberships.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/OrgUserId"
+      responses:
+        "200":
+          description: Organization user details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgUserShowResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      summary: Update organization user role
+      operationId: update_org_user_role
+      description: >-
+        Update a user's organization-level role. Requires org admin.
+        An admin cannot change their own role.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/OrgUserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgUserRoleUpdateRequest"
+      responses:
+        "200":
+          description: Role updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgUserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Remove organization user
+      operationId: remove_org_user
+      description: >-
+        Remove a user from an organization. Requires org admin. Also cancels any
+        pending invitations for the user's email in this organization.
+        Response body is empty.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/OrgUserId"
+      responses:
+        "200":
+          description: User removed from organization.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/users/{org_user_id}/projects/{project_id}:
+    put:
+      summary: Update organization user project permission
+      operationId: update_org_user_project_perm
+      description: >-
+        Set a user's project-level permission override. Requires org admin.
+        Upserts on (org_user_id, project_id).
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/OrgUserId"
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgUserProjectUpdateRequest"
+      responses:
+        "200":
+          description: Permission updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgUserProjectResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/invites:
+    get:
+      summary: List organization invitations
+      operationId: list_org_invites
+      description: >-
+        List all invitations for an organization. If the caller does not have
+        `CanInviteUsers` permission on the org, returns an empty list.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          description: Invitations listed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInviteListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      summary: Create organization invitation
+      operationId: create_org_invite
+      description: >-
+        Invite a user to the organization by email. Requires org admin.
+        If the invited email matches an existing user already a member of the
+        organization, the invitation is marked `accepted` immediately (no email
+        sent) and the user is optionally added to the specified team. Otherwise,
+        an invitation email is sent; the user must then call POST /join/{invite_id}
+        to materialize their `OrgUser` row.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInviteCreateRequest"
+      responses:
+        "200":
+          description: Invitation created (email sent) or immediately accepted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInviteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/invites/{invite_id}:
+    delete:
+      summary: Cancel organization invitation
+      operationId: cancel_org_invite
+      description: Cancel a pending invitation. Requires org admin.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/InviteId"
+      responses:
+        "200":
+          description: Invitation canceled. Returns the canceled invitation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInviteResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /internal/v1/orgs/{org_id}/teams:
     get:
       summary: List organization teams
@@ -3020,6 +3259,40 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/join/{invite_id}:
+    post:
+      summary: Accept organization invitation
+      operationId: join_org
+      description: >-
+        Accept a pending invitation and add the user to the organization.
+        This endpoint is public — it does not require authentication, only a
+        valid invitation ID. If the invited email does not yet correspond to a
+        registered user, a new user is created with a confirmed email. If the
+        user has no password set, a reset-password token is returned so the
+        client can prompt the user to set one. If the invitation included a
+        team, the user is also added to that team.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/InviteId"
+      responses:
+        "200":
+          description: >-
+            Invitation accepted. When the user had no password set, returns
+            `{resetPasswordToken}`. When the user already had a password, the
+            response body is empty.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -3546,6 +3819,14 @@ components:
       schema:
         type: integer
         format: uint64
+    InviteId:
+      name: invite_id
+      in: path
+      required: true
+      description: Invitation ID (32-character hex string).
+      schema:
+        type: string
+        pattern: "^[0-9a-f]{32}$"
     GridItemId:
       name: grid_item_id
       in: path
@@ -5660,6 +5941,256 @@ components:
       properties:
         permLevel:
           $ref: "#/components/schemas/PermLevel"
+
+    UserRole:
+      type: string
+      description: A user's role within an organization.
+      enum:
+        - owner
+        - admin
+        - member
+        - viewer
+        - billing_manager
+        - collaborator
+
+    InviteState:
+      type: string
+      description: Lifecycle state of an organization invitation.
+      enum:
+        - sent
+        - accepted
+        - canceled
+        - expired
+
+    OrgUser:
+      type: object
+      description: An organization membership row. Links a user to an organization with a role.
+      properties:
+        id:
+          type: integer
+          format: uint64
+        orgId:
+          type: integer
+          format: uint64
+        userId:
+          type: integer
+          format: uint64
+        providerId:
+          type: integer
+          format: uint64
+          description: >-
+            SSO provider ID if the membership was auto-provisioned via OIDC/SAML.
+            `0` for memberships created directly or via invitation acceptance.
+        role:
+          $ref: "#/components/schemas/UserRole"
+        updatedAt:
+          type: number
+          description: Unix timestamp in nanoseconds.
+      required:
+        - id
+        - orgId
+        - userId
+        - role
+
+    OrgUserDetail:
+      type: object
+      description: An OrgUser enriched with user profile and membership counts. Returned by list endpoints.
+      allOf:
+        - $ref: "#/components/schemas/OrgUser"
+        - type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            avatar:
+              type: string
+              description: URL to the user's avatar image.
+            mfaEnabled:
+              type: boolean
+              description: Whether the user has two-factor authentication enabled.
+            providerDomain:
+              type: string
+              description: SSO provider domain if the membership was auto-provisioned. Empty otherwise.
+            numProject:
+              type: integer
+              format: int64
+              description: Number of projects the user has access to within this organization.
+            numTeam:
+              type: integer
+              format: int64
+              description: Number of teams the user belongs to within this organization.
+          required:
+            - name
+            - email
+
+    OrgUserListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrgUserDetail"
+      required:
+        - users
+
+    OrgUserResponse:
+      type: object
+      description: Response wrapping a single OrgUser under the `user` key.
+      properties:
+        user:
+          $ref: "#/components/schemas/OrgUser"
+      required:
+        - user
+
+    OrgUserShowResponse:
+      type: object
+      description: Detailed org user view returned by `GET /orgs/{org_id}/users/{org_user_id}`.
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        orgUser:
+          $ref: "#/components/schemas/OrgUser"
+        projects:
+          type: array
+          description: Projects the user has access to in this organization.
+          items:
+            $ref: "#/components/schemas/Project"
+        teams:
+          type: array
+          description: Teams the user belongs to in this organization.
+          items:
+            $ref: "#/components/schemas/Team"
+      required:
+        - user
+        - orgUser
+        - projects
+        - teams
+
+    OrgUserRoleUpdateRequest:
+      type: object
+      properties:
+        role:
+          $ref: "#/components/schemas/UserRole"
+      required:
+        - role
+
+    OrgUserProject:
+      type: object
+      description: A user's project-level permission override.
+      properties:
+        orgId:
+          type: integer
+          format: uint64
+        orgUserId:
+          type: integer
+          format: uint64
+        projectId:
+          type: integer
+          format: uint32
+        permLevel:
+          $ref: "#/components/schemas/PermLevel"
+      required:
+        - orgId
+        - orgUserId
+        - projectId
+        - permLevel
+
+    OrgUserProjectResponse:
+      type: object
+      description: Response wrapping an OrgUserProject under the `user` key.
+      properties:
+        user:
+          $ref: "#/components/schemas/OrgUserProject"
+      required:
+        - user
+
+    OrgUserProjectUpdateRequest:
+      type: object
+      properties:
+        permLevel:
+          $ref: "#/components/schemas/PermLevel"
+      required:
+        - permLevel
+
+    UserInvite:
+      type: object
+      description: A pending or resolved organization invitation.
+      properties:
+        id:
+          type: string
+          description: 32-character hex trace ID used as the invitation token in the /join URL.
+        email:
+          type: string
+          description: Invitee email (lowercased, trimmed).
+        orgId:
+          type: integer
+          format: uint64
+        role:
+          $ref: "#/components/schemas/UserRole"
+        teamId:
+          type: integer
+          format: uint64
+          description: If set, the invitee is added to this team on acceptance.
+        state:
+          $ref: "#/components/schemas/InviteState"
+        createdAt:
+          type: number
+          description: Unix timestamp in nanoseconds.
+        team:
+          type: string
+          description: Team name populated on list responses. Empty if `teamId` is unset.
+      required:
+        - id
+        - email
+        - orgId
+        - role
+        - state
+
+    UserInviteResponse:
+      type: object
+      properties:
+        invite:
+          $ref: "#/components/schemas/UserInvite"
+      required:
+        - invite
+
+    UserInviteListResponse:
+      type: object
+      properties:
+        invites:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserInvite"
+      required:
+        - invites
+
+    UserInviteCreateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email address of the invitee. Required; trimmed and lowercased server-side.
+        role:
+          $ref: "#/components/schemas/UserRole"
+        teamId:
+          type: integer
+          format: uint64
+          description: Optional team to add the invitee to on acceptance. Must belong to the same org.
+      required:
+        - email
+        - role
+
+    JoinResponse:
+      type: object
+      description: >-
+        Response from accepting an invitation. Contains `resetPasswordToken` only
+        when the user had no password set prior to acceptance; otherwise the
+        server returns an empty body (decode as an empty object).
+      properties:
+        resetPasswordToken:
+          type: string
+          description: 32-character hex nonce. Use to set the user's initial password.
 
     EmptyResponse:
       type: object
