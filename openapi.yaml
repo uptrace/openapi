@@ -5980,7 +5980,7 @@ components:
           format: uint64
           description: >-
             SSO provider ID if the membership was auto-provisioned via OIDC/SAML.
-            `0` for memberships created directly or via invitation acceptance.
+            Zero for memberships created directly or via invitation acceptance.
         role:
           $ref: "#/components/schemas/UserRole"
         updatedAt:
@@ -6139,7 +6139,7 @@ components:
           description: Unix timestamp in nanoseconds.
         team:
           type: string
-          description: Team name populated on list responses. Empty if `teamId` is unset.
+          description: Team name populated on list responses. Empty if teamId is unset.
       required:
         - id
         - email
