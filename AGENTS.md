@@ -1,19 +1,12 @@
-# AGENTS
+# OpenAPI Development
 
-Guidance for automated agents working in this repository.
+This directory is a git submodule. The source of truth is `openapi.yaml`.
 
-## Scope
+## Rules
 
-- Source of truth: `openapi.yaml`.
-- Tooling: use pnpm for scripts and dependency management.
-
-## Commands
-
-- Lint: `pnpm lint`
-- Serve: `pnpm serve`
-
-## Conventions
-
-- Prefer minimal, precise OpenAPI changes.
-- Keep descriptions aligned with documented behavior.
-- All APIs under `/internal/v1` have beta stability.
+- Use `pnpm` for local scripts and dependency management.
+- Keep schema changes minimal and aligned with current behavior.
+- All `/internal/v1` endpoints are beta.
+- Lint with `pnpm lint`.
+- Preview with `pnpm serve`.
+- If schema changes affect generated Go clients or MCP code, run `task generate:uptraceapi` from the repo root.
