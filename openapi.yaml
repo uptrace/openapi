@@ -4668,14 +4668,31 @@ components:
           description: Occurrence count.
       required: [value, count]
 
-    Error:
+    ErrorDetail:
       type: object
+      description: Machine-readable error code and human-readable message.
       properties:
         code:
           type: string
+          description: Short error code such as forbidden or not_found, or a field name for validation errors.
         message:
           type: string
+          description: Human-readable explanation of what went wrong.
       required: [code, message]
+
+    Error:
+      type: object
+      description: Uniform error envelope returned for every non-2xx response.
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorDetail"
+        statusCode:
+          type: integer
+          description: HTTP status code; mirrors the response status line.
+        traceId:
+          type: string
+          description: Server-assigned trace ID useful for correlating logs.
+      required: [error, statusCode]
 
     SeedDataRequest:
       type: object
