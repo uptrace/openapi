@@ -4674,7 +4674,7 @@ components:
       properties:
         code:
           type: string
-          description: Short error code such as `forbidden`, `not_found`, or a field name for validation errors.
+          description: Short error code such as forbidden or not_found, or a field name for validation errors.
         message:
           type: string
           description: Human-readable explanation of what went wrong.
