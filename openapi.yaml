@@ -5961,9 +5961,9 @@ components:
         - billing_manager
         - collaborator
 
-    InviteState:
+    InviteStatus:
       type: string
-      description: Lifecycle state of an organization invitation.
+      description: Lifecycle status of an organization invitation.
       enum:
         - sent
         - accepted
@@ -6140,8 +6140,8 @@ components:
           type: integer
           format: uint64
           description: If set, the invitee is added to this team on acceptance.
-        state:
-          $ref: "#/components/schemas/InviteState"
+        status:
+          $ref: "#/components/schemas/InviteStatus"
         createdAt:
           type: number
           description: Unix timestamp in nanoseconds.
@@ -6153,7 +6153,7 @@ components:
         - email
         - orgId
         - role
-        - state
+        - status
 
     UserInviteResponse:
       type: object
