@@ -2714,6 +2714,41 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
+    post:
+      summary: Add organization user by ID
+      operationId: create_org_user
+      description: >-
+        Create or update an OrgUser membership for an existing User. Idempotent:
+        if the user is already a member, their role is updated to the supplied
+        value. Used by automation that holds a userId directly. Requires org
+        admin. Accepts users with email_confirmed=false (e.g. invited but not
+        yet accepted).
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgUserCreateRequest"
+      responses:
+        "200":
+          description: Membership created or role updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgUserCreateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /internal/v1/orgs/{org_id}/users/{org_user_id}:
     get:
@@ -2790,11 +2825,11 @@ paths:
         - $ref: "#/components/parameters/OrgUserId"
       responses:
         "200":
-          description: User removed from organization. Returns an empty object.
+          description: "User removed from organization. Returns {deleted: true}."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmptyResponse"
+                $ref: "#/components/schemas/OrgUserDeleteResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2869,12 +2904,20 @@ paths:
       summary: Create organization invitation
       operationId: create_org_invite
       description: >-
-        Invite a user to the organization by email. Requires org admin.
-        If the invited email matches an existing user already a member of the
-        organization, the invitation is marked `accepted` immediately (no email
-        sent) and the user is optionally added to the specified team. Otherwise,
-        an invitation email is sent; the user must then call POST /join/{invite_id}
-        to materialize their `OrgUser` row.
+        Invite a user to the organization by email. Requires org admin. Behavior:
+
+        - If the email maps to an already-confirmed User, attach them as an
+          OrgUser (and to any teamIds) immediately. The response includes
+          `addedToOrg: true` and no invite row is created.
+
+        - If the email maps to an unconfirmed User with a live pending invite for
+          this org, return 400 `invite_pending`.
+
+        - Otherwise create the User row (with `email_confirmed=false` if missing),
+          create a UserInvite row, send the invitation email, and return both
+          `userID` and `inviteID`.
+
+        Subject to a per-inviter cap of 10 live (sent + non-expired) invites.
       tags: [Users]
       x-badges:
         - name: beta
@@ -2926,6 +2969,37 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/orgs/{org_id}/invites/{invite_id}/resend:
+    post:
+      summary: Resend organization invitation
+      operationId: resend_org_invite
+      description: >-
+        Bump a live invite's expiry to now and re-send the invitation email.
+        Preserves the same `inviteID` and `invited_by` so the join link stays
+        valid. Requires org admin. Only invites in `sent` status can be resent;
+        `accepted`, `canceled`, and `expired` invites return 400.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - $ref: "#/components/parameters/InviteId"
+      responses:
+        "200":
+          description: Invitation re-sent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResendInviteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -3262,6 +3336,44 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/invites:
+    post:
+      summary: Create org-less user invitation (Terraform)
+      operationId: create_orgless_invite
+      description: >-
+        Top-level invite endpoint used by Terraform to pre-create a User row
+        without attaching org membership. Requires SuperAdmin. The body accepts
+        only `email`. If the email already maps to a confirmed User, the
+        response includes `alreadyConfirmed: true` and no invite is created.
+        Otherwise a User row is created with `email_confirmed=false` and an
+        invite row is persisted (no email is sent because there is no org
+        context to render against). Caller can then attach org membership
+        separately via POST /orgs/{org_id}/users.
+      tags: [Users]
+      x-badges:
+        - name: beta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrglessUserInviteCreateRequest"
+      responses:
+        "200":
+          description: Invitation processed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInviteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -6083,6 +6195,47 @@ components:
       required:
         - role
 
+    OrgUserCreateRequest:
+      type: object
+      description: Body for POST /orgs/{org_id}/users. Creates an OrgUser membership for an existing User by ID. Idempotent — re-posting the same userId updates the role.
+      properties:
+        userId:
+          type: integer
+          format: uint64
+          description: ID of an existing User to attach to the org.
+        role:
+          $ref: "#/components/schemas/UserRole"
+      required:
+        - userId
+        - role
+
+    OrgUserCreateResponse:
+      type: object
+      description: Response from POST /orgs/{org_id}/users. Wraps the created or updated OrgUser under `orgUser`.
+      properties:
+        orgUser:
+          $ref: "#/components/schemas/OrgUser"
+      required:
+        - orgUser
+
+    OrgUserDeleteResponse:
+      type: object
+      description: Response from DELETE /orgs/{org_id}/users/{org_user_id}.
+      properties:
+        deleted:
+          type: boolean
+      required:
+        - deleted
+
+    ResendInviteResponse:
+      type: object
+      description: Response from POST /orgs/{org_id}/invites/{invite_id}/resend.
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+
     OrgUserProject:
       type: object
       description: A user's project-level permission override.
@@ -6134,34 +6287,51 @@ components:
         orgId:
           type: integer
           format: uint64
+          description: Target organization. Omitted for top-level (Terraform) invites that pre-create only the user row.
         role:
           $ref: "#/components/schemas/UserRole"
-        teamId:
-          type: integer
-          format: uint64
-          description: If set, the invitee is added to this team on acceptance.
+        teamIds:
+          type: array
+          items:
+            type: integer
+            format: uint64
+          description: Teams the invitee is added to on acceptance. Each team must belong to the same org. Empty when no teams are specified.
         status:
           $ref: "#/components/schemas/InviteStatus"
         createdAt:
           type: number
           description: Unix timestamp in nanoseconds.
-        team:
-          type: string
-          description: Team name populated on list responses. Empty if teamId is unset.
       required:
         - id
         - email
-        - orgId
-        - role
         - status
+        - createdAt
 
     UserInviteResponse:
       type: object
+      description: >-
+        Response from creating or processing an invitation. `userID` is always
+        returned. `inviteID` is returned when an actual invite row was created;
+        absent when the email already maps to a confirmed user. `addedToOrg: true`
+        is returned only on the org-scoped path (POST /orgs/{org_id}/invites) when
+        the email maps to a confirmed user and the call attached them to the org
+        directly. Both boolean flags default to absent (treat absence as false).
       properties:
-        invite:
-          $ref: "#/components/schemas/UserInvite"
+        userID:
+          type: integer
+          format: uint64
+        inviteID:
+          type: string
+          description: 32-character hex trace ID. Absent when no new invite row was created.
+        alreadyConfirmed:
+          type: boolean
+          description: True when the email already mapped to a User with email_confirmed=true.
+        addedToOrg:
+          type: boolean
+          description: True when an already-confirmed user was attached to the org as part of this call (org-scoped path only).
       required:
-        - invite
+        - userID
+        - alreadyConfirmed
 
     UserInviteListResponse:
       type: object
@@ -6181,13 +6351,24 @@ components:
           description: Email address of the invitee. Required; trimmed and lowercased server-side.
         role:
           $ref: "#/components/schemas/UserRole"
-        teamId:
-          type: integer
-          format: uint64
-          description: Optional team to add the invitee to on acceptance. Must belong to the same org.
+        teamIds:
+          type: array
+          items:
+            type: integer
+            format: uint64
+          description: Teams to add the invitee to on acceptance. Each team must belong to the URL org.
       required:
         - email
-        - role
+
+    OrglessUserInviteCreateRequest:
+      type: object
+      description: Body for the top-level POST /invites (Terraform path). Only `email` is accepted; `role` and `teamIds` would be meaningless without an org.
+      properties:
+        email:
+          type: string
+          description: Email address of the invitee. Required; trimmed and lowercased server-side.
+      required:
+        - email
 
     JoinResponse:
       type: object
