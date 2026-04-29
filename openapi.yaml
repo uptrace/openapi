@@ -2907,15 +2907,16 @@ paths:
         Invite a user to the organization by email. Requires org admin. Behavior:
 
         - If the email maps to an already-confirmed User, attach them as an
-          OrgUser (and to any teamIds) immediately. The response includes
-          `addedToOrg: true` and no invite row is created.
+          OrgUser (and to any teamIds) immediately. The response includes a
+          compact invite summary with status `accepted` and orgId set to the
+          attached org; no invite row is inserted.
 
         - If the email maps to an unconfirmed User with a live pending invite for
-          this org, return 400 `invite_pending`.
+          this org, return the existing invite with status `sent`.
 
         - Otherwise create the User row (with `email_confirmed=false` if missing),
-          create a UserInvite row, send the invitation email, and return both
-          `userID` and `inviteID`.
+          create a UserInvite row, send the invitation email, and return it with
+          status `sent`.
 
         Subject to a per-inviter cap of 10 live (sent + non-expired) invites.
       tags: [Users]
@@ -2962,7 +2963,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserInviteResponse"
+                $ref: "#/components/schemas/UserInviteCancelResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2978,7 +2979,7 @@ paths:
       operationId: resend_org_invite
       description: >-
         Bump a live invite's expiry to now and re-send the invitation email.
-        Preserves the same `inviteID` and `invited_by` so the join link stays
+        Preserves the same invite ID and `invited_by` so the join link stays
         valid. Requires org admin. Only invites in `sent` status can be resent;
         `accepted`, `canceled`, and `expired` invites return 400.
       tags: [Users]
@@ -3345,13 +3346,13 @@ paths:
       operationId: create_orgless_invite
       description: >-
         Top-level invite endpoint used by Terraform to pre-create a User row
-        without attaching org membership. Requires SuperAdmin. The body accepts
-        only `email`. If the email already maps to a confirmed User, the
-        response includes `alreadyConfirmed: true` and no invite is created.
-        Otherwise a User row is created with `email_confirmed=false` and an
-        invite row is persisted (no email is sent because there is no org
-        context to render against). Caller can then attach org membership
-        separately via POST /orgs/{org_id}/users.
+        without attaching org membership. Requires authentication only. The body
+        accepts only `email`. If the email already maps to a confirmed User, the
+        response includes a compact invite summary with status `accepted`; no
+        invite row is inserted. Otherwise a User row is created with
+        `email_confirmed=false` and an invite row is persisted (no email is sent
+        because there is no org context to render against). Caller can then
+        attach org membership separately via POST /orgs/{org_id}/users.
       tags: [Users]
       x-badges:
         - name: beta
@@ -4069,6 +4070,23 @@ components:
         - id
         - name
         - email
+
+    PublicUser:
+      type: object
+      description: Safe user summary for UI display.
+      properties:
+        id:
+          type: integer
+          format: uint64
+        name:
+          type: string
+        avatar:
+          type: string
+          description: URL to the user's avatar image.
+      required:
+        - id
+        - name
+        - avatar
 
     Org:
       type: object
@@ -6236,6 +6254,15 @@ components:
       required:
         - ok
 
+    UserInviteCancelResponse:
+      type: object
+      description: Response from DELETE /orgs/{org_id}/invites/{invite_id}.
+      properties:
+        invite:
+          $ref: "#/components/schemas/UserInvite"
+      required:
+        - invite
+
     OrgUserProject:
       type: object
       description: A user's project-level permission override.
@@ -6310,28 +6337,39 @@ components:
     UserInviteResponse:
       type: object
       description: >-
-        Response from creating or processing an invitation. `userID` is always
-        returned. `inviteID` is returned when an actual invite row was created;
-        absent when the email already maps to a confirmed user. `addedToOrg: true`
-        is returned only on the org-scoped path (POST /orgs/{org_id}/invites) when
-        the email maps to a confirmed user and the call attached them to the org
-        directly. Both boolean flags default to absent (treat absence as false).
+        Response from creating or processing an invitation. `user` is a public
+        invitee summary. `invite` is a compact invite summary; `invite.status` is
+        `sent` for pending invitations and `accepted` when the email already maps
+        to a confirmed user. `invite.id` is the persisted invite ID for pending
+        invites and a response-only random ID for already-confirmed users.
+        `invite.orgId` is present for org-scoped actions; when `invite.status` is
+        `accepted` and `invite.orgId` is present, the confirmed user was attached
+        to that org.
       properties:
-        userID:
+        user:
+          $ref: "#/components/schemas/PublicUser"
+        invite:
+          $ref: "#/components/schemas/InviteSummary"
+      required:
+        - user
+        - invite
+
+    InviteSummary:
+      type: object
+      description: Compact invite summary returned from create-invite endpoints.
+      properties:
+        id:
+          type: string
+          description: 32-character hex trace ID.
+        status:
+          $ref: "#/components/schemas/InviteStatus"
+        orgId:
           type: integer
           format: uint64
-        inviteID:
-          type: string
-          description: 32-character hex trace ID. Absent when no new invite row was created.
-        alreadyConfirmed:
-          type: boolean
-          description: True when the email already mapped to a User with email_confirmed=true.
-        addedToOrg:
-          type: boolean
-          description: True when an already-confirmed user was attached to the org as part of this call (org-scoped path only).
+          description: Present for org-scoped invite actions.
       required:
-        - userID
-        - alreadyConfirmed
+        - id
+        - status
 
     UserInviteListResponse:
       type: object
