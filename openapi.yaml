@@ -3436,10 +3436,11 @@ paths:
         without attaching org membership. Requires authentication only. The body
         accepts only `email`. If the email already maps to a confirmed User, the
         response includes a compact invite summary with status `accepted`; no
-        invite row is inserted. Otherwise a User row is created with
-        `email_confirmed=false` and an invite row is persisted (no email is sent
-        because there is no org context to render against). Caller can then
-        attach org membership separately via POST /orgs/{org_id}/users.
+        invite row is inserted. Otherwise the endpoint ensures a User row
+        exists with `email_confirmed=false`, persists or reuses a sent invite
+        row, and sends an account invitation email when a new or reactivated
+        invite is created. Caller can then attach org membership separately via
+        POST /orgs/{org_id}/users.
       tags: [Users]
       x-badges:
         - name: beta
