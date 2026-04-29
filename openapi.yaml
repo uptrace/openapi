@@ -2825,11 +2825,11 @@ paths:
         - $ref: "#/components/parameters/OrgUserId"
       responses:
         "200":
-          description: "User removed from organization. Returns {deleted: true}."
+          description: User removed from organization. Returns an empty object.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrgUserDeleteResponse"
+                $ref: "#/components/schemas/EmptyResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -6238,15 +6238,6 @@ components:
           $ref: "#/components/schemas/OrgUser"
       required:
         - orgUser
-
-    OrgUserDeleteResponse:
-      type: object
-      description: Response from DELETE /orgs/{org_id}/users/{org_user_id}.
-      properties:
-        deleted:
-          type: boolean
-      required:
-        - deleted
 
     ResendInviteResponse:
       type: object
