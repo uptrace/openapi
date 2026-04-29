@@ -1303,6 +1303,90 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/monitors/{project_id}/{monitor_id}/active:
+    put:
+      summary: Activate a monitor
+      x-badges:
+        - name: beta
+      operationId: activate_monitor
+      description: Resume a monitor and set its status to active.
+      tags: [Monitors]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MonitorId"
+      responses:
+        "200":
+          description: Monitor activated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/monitors/{project_id}/{monitor_id}/paused:
+    put:
+      summary: Pause a monitor
+      x-badges:
+        - name: beta
+      operationId: pause_monitor
+      description: >-
+        Pause a monitor.
+        When `duration` is provided, the monitor automatically resumes after that period;
+        otherwise it stays paused until activated explicitly.
+      tags: [Monitors]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MonitorId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                duration:
+                  type: integer
+                  format: int64
+                  minimum: 3600000000000
+                  description: >-
+                    Pause duration in nanoseconds.
+                    Minimum 1 hour (3600000000000 ns).
+                    Omit for an indefinite pause.
+            examples:
+              indefinite:
+                summary: Pause indefinitely
+                value: {}
+              forTwoHours:
+                summary: Pause for 2 hours
+                value:
+                  duration: 7200000000000
+      responses:
+        "200":
+          description: Monitor paused.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /internal/v1/dashboards/{project_id}:
     get:
       summary: List dashboards
