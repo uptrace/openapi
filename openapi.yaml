@@ -2912,13 +2912,16 @@ paths:
           attached org; no invite row is inserted.
 
         - If the email maps to an unconfirmed User with a live pending invite for
-          this org, return the existing invite with status `sent`.
+          this org, return the existing invite with status `sent`. If the
+          existing invite is canceled or expired, reactivate it with status
+          `sent`.
 
         - Otherwise create the User row (with `email_confirmed=false` if missing),
           create a UserInvite row, send the invitation email, and return it with
           status `sent`.
 
-        Subject to a per-inviter cap of 10 live (sent + non-expired) invites.
+        Subject to a per-inviter cap of 10 pending invites. Every non-accepted
+        invite within the invite TTL counts toward the cap.
       tags: [Users]
       x-badges:
         - name: beta
@@ -2978,10 +2981,10 @@ paths:
       summary: Resend organization invitation
       operationId: resend_org_invite
       description: >-
-        Bump a live invite's expiry to now and re-send the invitation email.
-        Preserves the same invite ID and `invited_by` so the join link stays
-        valid. Requires org admin. Only invites in `sent` status can be resent;
-        `accepted`, `canceled`, and `expired` invites return 400.
+        Bump a sent or canceled invite's expiry to now and re-send the
+        invitation email. Preserves the same invite ID and `invited_by` so the
+        join link stays valid. Requires org admin. Canceled invites are restored
+        to `sent`; `accepted` and `expired` invites return 400.
       tags: [Users]
       x-badges:
         - name: beta
