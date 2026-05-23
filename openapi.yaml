@@ -4275,8 +4275,6 @@ components:
         semconvVersion:
           type: string
           enum: [none, "v1.25.0", "v1.33.0"]
-        displayLogSeverity:
-          type: boolean
         countDistinct:
           type: boolean
         spanQuery:
@@ -4369,8 +4367,6 @@ components:
         semconvVersion:
           type: string
           enum: [none, "v1.25.0", "v1.33.0"]
-        displayLogSeverity:
-          type: boolean
         countDistinct:
           type: boolean
         spanTimeRange:
