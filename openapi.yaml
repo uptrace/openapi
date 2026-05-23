@@ -4146,9 +4146,6 @@ components:
         otpEnabled:
           type: boolean
           description: Whether two-factor authentication is enabled.
-        lastReadAt:
-          type: number
-          description: Unix timestamp in nanoseconds of last read.
         timeZone:
           type: string
           description: IANA time zone (e.g., America/New_York).
