@@ -80,7 +80,7 @@ paths:
         Best for retrieving known spans when you already have an ID.
         For advanced filtering with UQL queries (WHERE, search, system filtering),
         use list_spans instead.
-        Documentation: https://uptrace.dev/features/querying/spans
+        Documentation: https://uptrace.dev/features/traces/querying-spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -152,7 +152,7 @@ paths:
         Supports basic search and duration filtering.
         For advanced aggregation with UQL queries (GROUP BY, HAVING, aggregate functions),
         use list_span_groups instead.
-        Documentation: https://uptrace.dev/features/querying/spans
+        Documentation: https://uptrace.dev/features/traces/querying-spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -236,7 +236,7 @@ paths:
         Returns individual span objects with attrs, timing, and status.
         Use list_span_groups instead when you need aggregated metrics (count, avg, p99).
         Use list_traces instead when you need to find traces matching multi-span criteria.
-        Documentation: https://uptrace.dev/features/querying/spans
+        Documentation: https://uptrace.dev/features/traces/querying-spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -381,7 +381,7 @@ paths:
         Returns grouped rows with dynamic columns based on the query.
         Use list_spans instead when you need individual span details.
         Use timeseries instead when you need time-bucketed data for charts.
-        Documentation: https://uptrace.dev/features/querying/spans
+        Documentation: https://uptrace.dev/features/traces/querying-spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -494,7 +494,7 @@ paths:
         Returns groups with arrays of float values aligned with the time array.
         Use list_span_groups instead when you need a single aggregated snapshot (not time-bucketed).
         Use quantiles instead when you only need latency percentiles (p50/p90/p99).
-        Documentation: https://uptrace.dev/features/querying/spans
+        Documentation: https://uptrace.dev/features/traces/querying-spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -635,7 +635,7 @@ paths:
         full-text search, system filtering (e.g. httpserver:all), and duration filtering.
         Use timeseries instead when you need custom aggregation queries with GROUP BY.
         Use list_span_groups instead when you need a single aggregated snapshot.
-        Documentation: https://uptrace.dev/features/querying/spans
+        Documentation: https://uptrace.dev/features/traces/querying-spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -737,7 +737,7 @@ paths:
         Returns grouped rows with dynamic columns.
         Use list_traces instead when you need individual trace details.
         Use list_span_groups instead when you don't need cross-span trace correlation.
-        Documentation: https://uptrace.dev/features/querying/spans
+        Documentation: https://uptrace.dev/features/traces/querying-spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -823,7 +823,7 @@ paths:
         Returns root spans for matching traces sorted by time (DESC by default).
         Use list_trace_groups instead when you need aggregated trace metrics.
         Use list_spans instead when you don't need cross-span trace correlation.
-        Documentation: https://uptrace.dev/features/querying/spans
+        Documentation: https://uptrace.dev/features/traces/querying-spans
       tags: [Querying]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
