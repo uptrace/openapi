@@ -1650,6 +1650,14 @@ paths:
             items:
               type: string
           example: ["host_name"]
+        - name: datapoints_per_min
+          in: query
+          required: false
+          description: >-
+            When true, include a datapointsPerMin field in each metric showing the
+            average number of datapoints per minute over the selected time range.
+          schema:
+            type: boolean
       responses:
         "200":
           description: Metrics list.
@@ -4802,6 +4810,9 @@ components:
         numTimeseries:
           type: integer
           description: Number of active timeseries.
+        datapointsPerMin:
+          type: number
+          description: Average datapoints per minute (present only when requested via datapoints_per_min=true).
       required: [name, instrument]
 
     ListMetricAttributesResponse:
