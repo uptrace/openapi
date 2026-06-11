@@ -5469,14 +5469,14 @@ components:
         gridMaxWidth:
           type: string
           enum:
-            - ""
+            - none
             - small
             - medium
             - large
             - extra_large
           description: >-
-            Page max width preset for the dashboard grid. Empty string means no
-            width constraint. Defaults to "small" (~1400 px).
+            Page max width preset for the dashboard grid. "none" means no width
+            constraint. Defaults to "small" (~1400 px).
         gridQuery:
           type: string
         gridVariables:
