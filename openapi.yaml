@@ -5467,7 +5467,16 @@ components:
         table:
           $ref: "#/components/schemas/TableGridItemParams"
         gridMaxWidth:
-          type: integer
+          type: string
+          enum:
+            - ""
+            - small
+            - medium
+            - large
+            - extra_large
+          description: >-
+            Page max width preset for the dashboard grid. Empty string means no
+            width constraint. Defaults to "small" (~1400 px).
         gridQuery:
           type: string
         gridVariables:
