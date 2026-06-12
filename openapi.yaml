@@ -5466,7 +5466,7 @@ components:
           description: Default time period in nanoseconds applied when the dashboard is opened without an explicit range.
         table:
           $ref: "#/components/schemas/TableGridItemParams"
-        gridMaxWidth:
+        maxWidth:
           type: string
           enum:
             - none
@@ -5475,7 +5475,7 @@ components:
             - large
             - extra_large
           description: >-
-            Page max width preset for the dashboard grid. "none" means no width
+            Page max width preset for the dashboard. "none" means no width
             constraint. Defaults to "small" (~1400 px).
         gridQuery:
           type: string
