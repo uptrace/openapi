@@ -6718,9 +6718,17 @@ components:
         priority:
           type: string
           enum: [P1, P2, P3, P4, P5]
+        provider:
+          type: string
+          description: "Alert API the channel targets: jsm = Jira Service Management, opsgenie = Opsgenie (deprecated), custom = the URL given in endpoint."
+          enum: [jsm, opsgenie, custom]
+        endpoint:
+          type: string
+          description: "Alert API URL for the custom provider; empty for jsm and opsgenie."
       required:
         - apiKey
         - priority
+        - provider
 
     TelegramParams:
       type: object
