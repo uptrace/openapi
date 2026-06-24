@@ -732,6 +732,8 @@ paths:
         Use this to find trace patterns and get aggregated trace metrics.
         Requires parallel arrays: query[], alias[], system[] with matching lengths.
         One alias must be 'root' to identify the root span query.
+        Scope the root query to root spans by including `where _parent_id = 0`
+        so each result row is one trace (the backend does not add this for you).
         Additional sub-queries filter traces where child spans match specific criteria.
         Systems: spans:all, httpserver:all, db:postgresql, log:error, etc.
         Returns grouped rows with dynamic columns.
@@ -818,6 +820,8 @@ paths:
         Use this to find specific traces matching complex multi-span criteria.
         Requires parallel arrays: query[], alias[], system[] with matching lengths.
         One alias must be 'root' to identify the root span query.
+        Scope the root query to root spans by including `where _parent_id = 0`
+        so each result row is one trace (the backend does not add this for you).
         Additional sub-queries filter traces where child spans match specific criteria.
         Systems: spans:all, httpserver:all, db:postgresql, log:error, etc.
         Returns root spans for matching traces sorted by time (DESC by default).
