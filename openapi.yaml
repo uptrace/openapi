@@ -4436,9 +4436,9 @@ components:
         traceId:
           type: string
           description: Trace ID (hex-encoded).
-        standalone:
+        untraced:
           type: boolean
-          description: Whether the span is standalone (not part of a trace).
+          description: Whether the span is untraced (not part of a distributed trace).
         projectId:
           type: integer
           format: uint32
