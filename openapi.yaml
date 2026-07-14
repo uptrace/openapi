@@ -4052,8 +4052,9 @@ components:
   schemas:
     AlertType:
       type: string
-      description: Alert type.
-      enum: [error, metric]
+      description: >-
+        Alert type. An slo alert is fired by one burn-rate rule of an SLO monitor.
+      enum: [error, metric, slo]
 
     AlertStatus:
       type: string
@@ -4646,7 +4647,7 @@ components:
         type:
           type: string
           description: Alert type to close.
-          enum: [error, metric]
+          enum: [error, metric, slo]
         attrs:
           type: object
           additionalProperties:
@@ -5376,7 +5377,7 @@ components:
           description: True when the name contains template placeholders that are expanded at evaluation time.
         type:
           type: string
-          enum: [metric, error]
+          enum: [metric, error, slo]
         status:
           type: string
           enum: [active, paused, firing, no_data, disabled]
