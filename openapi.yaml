@@ -5153,7 +5153,7 @@ components:
         trendSensitivity:
           type: string
           description: Sensitivity level of the trend-based anomaly detector.
-          enum: [low, medium, high]
+          enum: [very_low, low, medium, high, very_high]
       required:
         - name
     MetricMonitorRequest:
@@ -5409,7 +5409,7 @@ components:
         trendSensitivity:
           type: string
           description: Sensitivity level of the trend-based anomaly detector.
-          enum: [low, medium, high]
+          enum: [very_low, low, medium, high, very_high]
         trendUpdatedAt:
           type: number
           description: Unix timestamp (nanoseconds) when the trend baseline was last refreshed.
