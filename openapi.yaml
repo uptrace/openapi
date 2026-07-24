@@ -4908,15 +4908,14 @@ components:
       description: What attached an alert to an incident.
       enum: [user, genai]
 
-    IncidentGroupingEvidence:
+    IncidentGroupingDecision:
       type: object
-      description: The durable audit record of why an alert was automatically grouped.
+      description: The automatic grouper's decision that attached an alert, kept so the grouping can be reviewed later.
       properties:
         action: { type: string, enum: [attach, create] }
         alertIds: { type: array, items: { type: integer, format: uint64 } }
         incidentId: { type: integer, format: uint64 }
         title: { type: string }
-        grouper: { type: string, description: "Name of the grouper that produced the decision." }
         confidence: { type: number, format: double }
         reason: { type: string }
         signal: { type: string, enum: [same_resource, same_service, shared_scope] }
@@ -4960,7 +4959,7 @@ components:
             userId: { type: integer, format: uint64 }
             attachedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
             detachedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
-            evidence: { $ref: "#/components/schemas/IncidentGroupingEvidence" }
+            decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             movedFromIncidentId: { type: integer, format: uint64 }
       required: [id, projectId, name, type]
 
