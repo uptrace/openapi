@@ -6572,6 +6572,18 @@ components:
           $ref: "#/components/schemas/CheckDiagnosis"
         diagnostic:
           $ref: "#/components/schemas/Diagnostic"
+        alertUnresolvedCount:
+          type: integer
+          description: Unresolved alerts currently open on this monitor.
+        alertResolvedCount:
+          type: integer
+          description: Resolved alerts on this monitor.
+        alertArchivedCount:
+          type: integer
+          description: Archived alerts on this monitor.
+        channelCount:
+          type: integer
+          description: Notification channels this monitor delivers to.
         notifyEveryoneByEmail:
           type: boolean
         teamIds:
