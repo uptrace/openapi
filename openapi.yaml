@@ -3251,7 +3251,7 @@ paths:
               type: object
               required: [loserId]
               properties:
-                loserId: { type: integer, format: uint64, description: "The incident folded into this one." }
+                loserId: { type: integer, format: uint64, description: "The incident folded into this one. It becomes merged, a terminal state that (unlike closed) cannot be reopened." }
       responses:
         "200":
           description: The surviving incident.
