@@ -2763,6 +2763,13 @@ paths:
                 required: [incident]
                 properties:
                   incident: { $ref: "#/components/schemas/IncidentLean" }
+                  skipped:
+                    type: array
+                    items: { type: integer, format: uint64 }
+                    description: >-
+                      IDs of requested alerts left out because another incident already holds
+                      them. The incident is founded over the free alerts only; a member is never
+                      pulled out of another incident. Empty when every requested alert was free.
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3180,6 +3187,13 @@ paths:
                 required: [incident]
                 properties:
                   incident: { $ref: "#/components/schemas/IncidentLean" }
+                  skipped:
+                    type: array
+                    items: { type: integer, format: uint64 }
+                    description: >-
+                      IDs of requested alerts left out because another incident already holds
+                      them. A skipped alert stays where it is; it is never moved. Empty when
+                      every requested alert was free to attach.
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
