@@ -5309,10 +5309,23 @@ components:
         signal: { type: string, enum: [same_resource, same_service, shared_scope] }
         evidenceAlertIds: { type: array, items: { type: integer, format: uint64 } }
 
+    EventName:
+      type: string
+      description: >-
+        What drove an incident event. A "note" event carries a user's free-text note; the
+        other values are lifecycle, triage, and membership changes.
+      enum:
+        [created, resolved, reopened, merged, closed, priority_changed,
+         assignee_changed, acknowledged, note, member_attached, member_detached]
+
     EventLean:
       type: object
       description: A lean incident event carrying the lifecycle state at a point in time.
       properties:
+        id: { type: integer, format: uint64, description: "Event ID. For a note event this is the noteId passed to update_incident_note and delete_incident_note." }
+        name: { $ref: "#/components/schemas/EventName" }
+        userId: { type: integer, format: uint64, description: "User who caused the event, when one did (e.g. a note's author)." }
+        note: { type: string, description: "Free-text body of a note event; empty for other event types." }
         status: { $ref: "#/components/schemas/IncidentStatus" }
         priority: { $ref: "#/components/schemas/AlertPriority" }
         priorityOverride: { $ref: "#/components/schemas/AlertPriority" }
