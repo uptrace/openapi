@@ -5147,8 +5147,6 @@ components:
             Unix timestamp (milliseconds) of the measurement. Absent when the number is
             not one — a threshold, a count.
       required:
-        - num
-        - unit
         - text
 
     CheckDiagnosis:
