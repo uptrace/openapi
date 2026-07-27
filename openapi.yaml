@@ -4862,6 +4862,14 @@ components:
       description: Alert priority level.
       enum: [info, low, medium, high]
 
+    AlertPriorityOverride:
+      type: string
+      description: >-
+        An explicit priority override, which wins over the activity-derived default.
+        Both a user's priority change and a matching set_priority policy action set
+        it. Empty — the usual case — when no override is in force.
+      enum: ["", info, low, medium, high]
+
     Alert:
       type: object
       description: An alert fired by a monitor.
@@ -4908,8 +4916,10 @@ components:
             format: double
         trendAggFunc:
           type: string
-          description: Aggregation that reduces hourlyTrend to trendValue.
-          enum: [sum, avg, median, last]
+          description: >-
+            Aggregation that reduces hourlyTrend to trendValue. Empty on an alert
+            whose trend has never been folded.
+          enum: ["", sum, avg, median, last]
         trendValue:
           type: number
           format: double
@@ -4984,7 +4994,7 @@ components:
         priority:
           $ref: "#/components/schemas/AlertPriority"
         priorityOverride:
-          $ref: "#/components/schemas/AlertPriority"
+          $ref: "#/components/schemas/AlertPriorityOverride"
         archivedUntil:
           type: number
           format: double
@@ -5001,8 +5011,9 @@ components:
             format: double
         snapshotSlope:
           type: string
-          description: Trend direction of the snapshot.
-          enum: [constant, increasing, decreasing]
+          description: >-
+            Trend direction of the snapshot. Empty on an event that recorded none.
+          enum: ["", constant, increasing, decreasing]
         snapshotUpdatedAt:
           type: number
           format: double
