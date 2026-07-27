@@ -2708,7 +2708,7 @@ paths:
             items: { $ref: "#/components/schemas/AlertPriority" }
         - name: assignee
           in: query
-          description: Filter by assignee. A user id, or "none" for unassigned.
+          description: Filter by assignee. A user id, or 'none' for unassigned.
           schema: { type: string }
         - name: search
           in: query
@@ -2797,7 +2797,7 @@ paths:
             items: { $ref: "#/components/schemas/AlertPriority" }
         - name: assignee
           in: query
-          description: Filter by assignee. A user id, or "none" for unassigned.
+          description: Filter by assignee. A user id, or 'none' for unassigned.
           schema: { type: string }
         - name: search
           in: query
@@ -5326,7 +5326,7 @@ components:
     EventName:
       type: string
       description: >-
-        What drove an incident event. A "note" event carries a user's free-text note; the
+        What drove an incident event. A note event carries a user's free-text note; the
         other values are lifecycle, triage, and membership changes.
       enum:
         [created, resolved, reopened, merged, closed, priority_changed,
@@ -6608,7 +6608,7 @@ components:
           description: Name of the query result column being monitored.
         unit:
           type: string
-          description: Display unit for the column values (e.g. "milliseconds", "bytes").
+          description: Display unit for the column values (e.g. 'milliseconds', 'bytes').
     Recovery:
       type: object
       properties:
