@@ -5405,6 +5405,13 @@ components:
         status:
           type: string
           description: The recommendation's decision state.
+          # Prefix the generated constants so they do not collide with the bare Accepted
+          # (InviteStatus) and Pending (TemplateStatus) enum values elsewhere in the client.
+          x-enum-names:
+            - RecommendationLeanStatusPending
+            - RecommendationLeanStatusAccepted
+            - RecommendationLeanStatusRejected
+            - RecommendationLeanStatusSuperseded
           enum: [pending, accepted, rejected, superseded]
         decidedBy: { type: integer, format: uint64 }
         decidedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
