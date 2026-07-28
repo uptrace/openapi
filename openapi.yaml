@@ -2712,7 +2712,7 @@ paths:
           schema: { type: string }
         - name: search
           in: query
-          description: Free-text search across incident title and summary.
+          description: Free-text search across incident title.
           schema: { type: string }
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Page"
@@ -2801,7 +2801,7 @@ paths:
           schema: { type: string }
         - name: search
           in: query
-          description: Free-text search across incident title and summary.
+          description: Free-text search across incident title.
           schema: { type: string }
       responses:
         "200":
