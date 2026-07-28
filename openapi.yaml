@@ -2593,6 +2593,99 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /internal/v1/alerts/{project_id}/resolve:
+    put:
+      summary: Resolve alerts
+      x-badges:
+        - name: beta
+      operationId: resolve_alerts
+      description: >-
+        Close the named alerts. Each one gets a status_changed event recording who
+        closed it and when, carrying its last known series snapshot forward — a status
+        change records the action, not a fresh measurement. A self-resolving alert
+        whose condition still holds is reopened by the next check that sees it firing.
+      tags: [Alerts]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertStatusUpdateRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/AlertStatusUpdated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/alerts/{project_id}/unresolve:
+    put:
+      summary: Reopen alerts
+      x-badges:
+        - name: beta
+      operationId: unresolve_alerts
+      description: >-
+        Return the named alerts to unresolved, reopening them without waiting for a
+        check to see the condition fire again. Any archive deadline is cleared.
+      tags: [Alerts]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertStatusUpdateRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/AlertStatusUpdated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /internal/v1/alerts/{project_id}/archive:
+    put:
+      summary: Archive alerts
+      x-badges:
+        - name: beta
+      operationId: archive_alerts
+      description: >-
+        Mute the named alerts. An archived alert is left untouched by checks while its
+        archive window holds, so it neither recurs nor resolves. This is the one status
+        change that reads archivedUntil.
+      tags: [Alerts]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertStatusUpdateRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/AlertStatusUpdated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /internal/v1/incidents/{project_id}:
     get:
       summary: List incidents
@@ -4869,6 +4962,32 @@ components:
         Both a user's priority change and a matching set_priority policy action set
         it. Empty — the usual case — when no override is in force.
       enum: ["", info, low, medium, high]
+
+    AlertStatusUpdateRequest:
+      type: object
+      description: >-
+        Which alerts to move. Shared by resolve, unresolve and archive: the three run
+        one handler and take one body.
+      properties:
+        ids:
+          type: array
+          description: >-
+            The alerts to move. A request naming more than 1000 is rejected rather than
+            silently truncated, so a client learns its selection was not fully applied.
+          minItems: 1
+          maxItems: 1000
+          items:
+            type: integer
+            format: uint64
+        archivedUntil:
+          type: number
+          format: double
+          description: >-
+            Unix timestamp (milliseconds) until which an archived alert stays muted;
+            zero archives it until a status change reopens it. Read only by archive —
+            resolve and unresolve clear any existing deadline instead.
+      required:
+        - ids
 
     Alert:
       type: object
@@ -7734,6 +7853,16 @@ components:
       description: Empty JSON object `{}`. Returned by operations that have no resource to return on success.
 
   responses:
+    AlertStatusUpdated:
+      description: >-
+        Alerts updated. An alert another actor advanced mid-request is skipped rather
+        than failing the batch, so a success does not guarantee every named alert moved;
+        an id belonging to another project is simply not found and skipped alike.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/EmptyResponse"
+
     BadRequest:
       description: Invalid request
       content:
