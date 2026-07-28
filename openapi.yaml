@@ -3051,6 +3051,10 @@ paths:
                 properties:
                   analysis: { $ref: "#/components/schemas/AnalysisLean" }
                   analyzedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) when the analysis completed." }
+                  alertsById:
+                    type: object
+                    description: "The alerts the analysis cites -- its probable root cause plus every hypothesis's evidence -- keyed by alert id."
+                    additionalProperties: { $ref: "#/components/schemas/AlertLean" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
