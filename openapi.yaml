@@ -5022,6 +5022,12 @@ components:
           format: uint64
         name:
           type: string
+        description:
+          type: string
+          description: >-
+            The monitor's description rendered when this alert's title was rendered.
+            Absent when the monitor has none, and absent on alerts last written before
+            the monitor's description was set.
         type:
           $ref: "#/components/schemas/AlertType"
         attrs:
@@ -6471,6 +6477,15 @@ components:
       properties:
         name:
           type: string
+        description:
+          type: string
+          description: >-
+            Optional multiline alert description — runbook links and triage context,
+            shown on the alert and in notifications but never in a title or an email
+            subject. For metric and error monitors it accepts the same template
+            placeholders the name does and is rendered against the series that fired;
+            SLO descriptions are static text. Omit it or send an empty string for none.
+            At most 4000 characters after outer whitespace is trimmed.
         notifyEveryoneByEmail:
           type: boolean
         teamIds:
@@ -6712,6 +6727,15 @@ components:
         isNameTemplated:
           type: boolean
           description: True when the name contains template placeholders that are expanded at evaluation time.
+        description:
+          type: string
+          description: >-
+            The monitor's alert description, as configured. Empty when the monitor has none.
+        isDescriptionTemplated:
+          type: boolean
+          description: >-
+            True when the description contains template placeholders that are expanded at
+            evaluation time. Always false for an SLO monitor, whose description is static.
         type:
           type: string
           enum: [metric, error, slo]
