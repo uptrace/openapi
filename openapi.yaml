@@ -5528,6 +5528,7 @@ components:
             resolved: { type: integer }
             merged: { type: integer }
             closed: { type: integer }
+            archived: { type: integer, description: "How many archived incidents the archive scope leaves out. Every other tally counts inside that scope." }
         priorityCounts:
           type: object
           description: Per-priority counts.
