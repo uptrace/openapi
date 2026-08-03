@@ -5169,7 +5169,7 @@ components:
           description: >-
             The value the event was judged at. Null when that point reported no value —
             an alert that fired on missing data has no number to name.
-        valueTime:
+        valueAt:
           type: number
           format: double
           description: Unix timestamp (milliseconds) of currentValue.
@@ -6804,7 +6804,7 @@ components:
           type: number
           format: double
           description: Unix timestamp (milliseconds) when the monitor was last evaluated.
-        nextCheckTime:
+        nextCheckAt:
           type: number
           format: double
           description: Unix timestamp (milliseconds) when the monitor is scheduled to be evaluated next.
