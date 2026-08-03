@@ -6489,7 +6489,10 @@ components:
           enum: [sum, avg, median, last]
         trendSensitivity:
           type: string
-          description: Sensitivity level of the trend-based anomaly detector.
+          description: >-
+            How readily an alert escalates on its hourly trend and how soon it
+            declares recovery. An alert-lifecycle dial; not the anomaly
+            detector's own sensitivity, which is set per detector.
           enum: [very_low, low, medium, high, very_high]
       required:
         - name
@@ -6762,7 +6765,10 @@ components:
           enum: [sum, avg, median, last]
         trendSensitivity:
           type: string
-          description: Sensitivity level of the trend-based anomaly detector.
+          description: >-
+            How readily an alert escalates on its hourly trend and how soon it
+            declares recovery. An alert-lifecycle dial; not the anomaly
+            detector's own sensitivity, which is set per detector.
           enum: [very_low, low, medium, high, very_high]
         trendUpdatedAt:
           type: number
