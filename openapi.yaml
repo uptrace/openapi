@@ -2690,7 +2690,9 @@ paths:
     get:
       summary: List incidents
       operationId: ListIncidents
-      description: List incidents, filterable by status, priority, assignee, and free-text search.
+      description: >-
+        List incidents, filterable by status, priority, assignee, silence, and free-text
+        search. Silenced incidents are excluded unless the archived parameter asks for them.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2710,6 +2712,7 @@ paths:
           in: query
           description: Filter by assignee. A user id, or 'none' for unassigned.
           schema: { type: string }
+        - $ref: "#/components/parameters/IncidentArchived"
         - name: search
           in: query
           description: Free-text search across incident title.
@@ -2779,7 +2782,10 @@ paths:
     get:
       summary: Incident counts
       operationId: IncidentCounts
-      description: Returns per-status and per-priority tallies for the project's incidents.
+      description: >-
+        Returns per-status and per-priority tallies for the project's incidents. A tally
+        counts what the same filter would list, so silenced incidents are excluded unless
+        the archived parameter asks for them.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2799,6 +2805,7 @@ paths:
           in: query
           description: Filter by assignee. A user id, or 'none' for unassigned.
           schema: { type: string }
+        - $ref: "#/components/parameters/IncidentArchived"
         - name: search
           in: query
           description: Free-text search across incident title.
@@ -2914,11 +2921,53 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "500": { $ref: "#/components/responses/InternalError" }
 
-  /internal/v1/incidents/{project_id}/acknowledge:
+  /internal/v1/incidents/{project_id}/archive:
     put:
-      summary: Acknowledge incidents
-      operationId: AcknowledgeIncidents
-      description: Acknowledge every incident named in the request body.
+      summary: Archive incidents
+      operationId: ArchiveIncidents
+      description: >-
+        Silence every incident named in the request body until archivedUntil, or
+        indefinitely when it is omitted. A silenced incident is skipped by the lifecycle
+        sweep, is not offered to automatic grouping, and is hidden from the default list.
+        Its member alerts are not silenced: they go on firing and notifying. A window
+        already in force is replaced, in either direction.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids: { type: array, items: { type: integer, format: uint64 } }
+                archivedUntil: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the silence lapses at. Must be in the future. Omit for an indefinite silence." }
+      responses:
+        "200":
+          description: Archived incidents.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [archived, skipped]
+                properties:
+                  archived: { type: integer, format: int64, description: "Number of incidents that were archived." }
+                  skipped: { type: integer, format: int64, description: "Number of incidents skipped (already in the target state or invalid)." }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /internal/v1/incidents/{project_id}/unarchive:
+    put:
+      summary: Unarchive incidents
+      operationId: UnarchiveIncidents
+      description: >-
+        Lift the silence on every incident named in the request body, returning it to the
+        lifecycle sweep, to automatic grouping, and to the default list. A window that has
+        already lapsed needs no call: it stops applying on its own.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2933,14 +2982,14 @@ paths:
                 ids: { type: array, items: { type: integer, format: uint64 } }
       responses:
         "200":
-          description: Acknowledged incidents.
+          description: Unarchived incidents.
           content:
             application/json:
               schema:
                 type: object
-                required: [acknowledged, skipped]
+                required: [unarchived, skipped]
                 properties:
-                  acknowledged: { type: integer, format: int64, description: "Number of incidents that were acknowledged." }
+                  unarchived: { type: integer, format: int64, description: "Number of incidents that were unarchived." }
                   skipped: { type: integer, format: int64, description: "Number of incidents skipped (already in the target state or invalid)." }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -4816,6 +4865,16 @@ components:
       schema:
         type: integer
         format: uint32
+    IncidentArchived:
+      name: archived
+      in: query
+      description: >-
+        How to treat silenced incidents. Omit to exclude them, which is what a person
+        triaging sees. 'only' returns just the silenced ones, for a review of what is
+        muted. 'any' returns the whole population.
+      schema:
+        type: string
+        enum: [only, any]
     OrgId:
       name: org_id
       in: path
@@ -5331,10 +5390,13 @@ components:
       type: string
       description: >-
         What drove an incident event. A note event carries a user's free-text note; the
-        other values are lifecycle, triage, and membership changes.
+        other values are lifecycle, triage, and membership changes. Nothing produces
+        'acknowledged' any more, and it stays for the episodes worked before the silence
+        axis replaced acknowledgement.
       enum:
         [created, resolved, reopened, merged, closed, priority_changed,
-         assignee_changed, acknowledged, note, member_attached, member_detached]
+         assignee_changed, archived, unarchived, acknowledged, note,
+         member_attached, member_detached]
 
     EventLean:
       type: object
@@ -5348,7 +5410,8 @@ components:
         priority: { $ref: "#/components/schemas/AlertPriority" }
         priorityOverride: { $ref: "#/components/schemas/AlertPriority" }
         assigneeId: { type: integer, format: uint64 }
-        acknowledgedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
+        archivedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the incident was silenced at, or 0 when it is not silenced." }
+        archivedUntil: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the silence lapses at, or 0 for an indefinite one. A value in the past has already lapsed, with no event to say so." }
         mergedIntoId: { type: integer, format: uint64 }
         alertIds: { type: array, items: { type: integer, format: uint64 } }
         createdAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
