@@ -2691,8 +2691,8 @@ paths:
       summary: List incidents
       operationId: ListIncidents
       description: >-
-        List incidents, filterable by status, priority, assignee, silence, and free-text
-        search. Silenced incidents are excluded unless the archived parameter asks for them.
+        List incidents, filterable by status, priority, assignee, archive, and free-text
+        search. Archived incidents are excluded unless the archived parameter asks for them.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2784,7 +2784,7 @@ paths:
       operationId: IncidentCounts
       description: >-
         Returns per-status and per-priority tallies for the project's incidents. A tally
-        counts what the same filter would list, so silenced incidents are excluded unless
+        counts what the same filter would list, so archived incidents are excluded unless
         the archived parameter asks for them.
       tags: [Incidents]
       parameters:
@@ -2926,11 +2926,12 @@ paths:
       summary: Archive incidents
       operationId: ArchiveIncidents
       description: >-
-        Silence every incident named in the request body until archivedUntil, or
-        indefinitely when it is omitted. A silenced incident is skipped by the lifecycle
-        sweep, is not offered to automatic grouping, and is hidden from the default list.
-        Its member alerts are not silenced: they go on firing and notifying. A window
-        already in force is replaced, in either direction.
+        File away every incident named in the request body until archivedUntil, or
+        indefinitely when it is omitted. An archived incident is hidden from the default
+        list and is not offered to automatic grouping. Its lifecycle is untouched: the
+        sweep still resolves and closes it. Its member alerts are not archived either, so
+        they go on firing and notifying. A window already in force is replaced, in either
+        direction.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2943,7 +2944,7 @@ paths:
               required: [ids]
               properties:
                 ids: { type: array, items: { type: integer, format: uint64 } }
-                archivedUntil: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the silence lapses at. Must be in the future. Omit for an indefinite silence." }
+                archivedUntil: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the archive lapses at. Must be in the future. Omit for an indefinite archive." }
       responses:
         "200":
           description: Archived incidents.
@@ -2965,9 +2966,9 @@ paths:
       summary: Unarchive incidents
       operationId: UnarchiveIncidents
       description: >-
-        Lift the silence on every incident named in the request body, returning it to the
-        lifecycle sweep, to automatic grouping, and to the default list. A window that has
-        already lapsed needs no call: it stops applying on its own.
+        Take every incident named in the request body back, returning it to the default
+        list and to automatic grouping. A window that has already lapsed needs no call: it
+        stops applying on its own.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -4869,9 +4870,9 @@ components:
       name: archived
       in: query
       description: >-
-        How to treat silenced incidents. Omit to exclude them, which is what a person
-        triaging sees. 'only' returns just the silenced ones, for a review of what is
-        muted. 'any' returns the whole population.
+        How to treat archived incidents. Omit to exclude them, which is what a person
+        triaging sees. 'only' returns just the archived ones, for a review of what is filed
+        away. 'any' returns the whole population.
       schema:
         type: string
         enum: [only, any]
@@ -5391,7 +5392,7 @@ components:
       description: >-
         What drove an incident event. A note event carries a user's free-text note; the
         other values are lifecycle, triage, and membership changes. Nothing produces
-        'acknowledged' any more, and it stays for the episodes worked before the silence
+        'acknowledged' any more, and it stays for the episodes worked before the archive
         axis replaced acknowledgement.
       enum:
         [created, resolved, reopened, merged, closed, priority_changed,
@@ -5410,8 +5411,8 @@ components:
         priority: { $ref: "#/components/schemas/AlertPriority" }
         priorityOverride: { $ref: "#/components/schemas/AlertPriority" }
         assigneeId: { type: integer, format: uint64 }
-        archivedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the incident was silenced at, or 0 when it is not silenced." }
-        archivedUntil: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the silence lapses at, or 0 for an indefinite one. A value in the past has already lapsed, with no event to say so." }
+        archivedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the incident was archived at, or 0 when it is not archived." }
+        archivedUntil: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the archive lapses at, or 0 for an indefinite one. A value in the past has already lapsed, with no event to say so." }
         mergedIntoId: { type: integer, format: uint64 }
         alertIds: { type: array, items: { type: integer, format: uint64 } }
         createdAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
