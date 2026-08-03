@@ -2662,7 +2662,7 @@ paths:
         - name: beta
       operationId: archive_alerts
       description: >-
-        Mute the named alerts. An archived alert is left untouched by checks while its
+        Archive the named alerts. An archived alert is left untouched by checks while its
         archive window holds, so it neither recurs nor resolves. This is the one status
         change that reads archivedUntil.
       tags: [Alerts]
@@ -2928,9 +2928,11 @@ paths:
       description: >-
         File away every incident named in the request body until archivedUntil, or
         indefinitely when it is omitted. An archived incident is hidden from the default
-        list and is not offered to automatic grouping. Its lifecycle is untouched: the
-        sweep still resolves and closes it. Its member alerts are not archived either, so
-        they go on firing and notifying. A window already in force is replaced, in either
+        list. The lifecycle sweep stops ending it, so it reaches no terminal status on its
+        own, and it still reopens the incident when a member regresses. Automatic grouping
+        still offers it, so it goes on absorbing new alerts of the same episode and the
+        window survives the attach. Its member alerts are not archived either, so they go
+        on firing and notifying. A window already in force is replaced, in either
         direction.
       tags: [Incidents]
       parameters:
@@ -2967,7 +2969,7 @@ paths:
       operationId: UnarchiveIncidents
       description: >-
         Take every incident named in the request body back, returning it to the default
-        list and to automatic grouping. A window that has already lapsed needs no call: it
+        list and to the lifecycle sweep. A window that has already lapsed needs no call: it
         stops applying on its own.
       tags: [Incidents]
       parameters:
@@ -4870,12 +4872,11 @@ components:
       name: archived
       in: query
       description: >-
-        How to treat archived incidents. Omit to exclude them, which is what a person
-        triaging sees. 'only' returns just the archived ones, for a review of what is filed
-        away. 'any' returns the whole population.
+        Include archived incidents. Omit or false to exclude them, which is what a person
+        triaging sees. True returns the whole population, for a caller naming a target
+        rather than working a list.
       schema:
-        type: string
-        enum: [only, any]
+        type: boolean
     OrgId:
       name: org_id
       in: path
@@ -5061,9 +5062,9 @@ components:
           type: number
           format: double
           description: >-
-            Unix timestamp (milliseconds) until which an archived alert stays muted;
-            zero archives it until a status change reopens it. Read only by archive —
-            resolve and unresolve clear any existing deadline instead.
+            Unix timestamp (milliseconds) until which the alert stays archived. Zero
+            archives it until a status change reopens it. Read only by archive: resolve
+            and unresolve clear any existing deadline instead.
       required:
         - ids
 
