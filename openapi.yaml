@@ -2944,7 +2944,7 @@ paths:
               required: [ids]
               properties:
                 ids: { type: array, items: { type: integer, format: uint64 } }
-                archivedUntil: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the archive lapses at. Must be in the future. Omit for an indefinite archive." }
+                archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at. Must be in the future. Omit for an indefinite archive." }
       responses:
         "200":
           description: Archived incidents.
@@ -3100,7 +3100,7 @@ paths:
                 type: object
                 properties:
                   analysis: { $ref: "#/components/schemas/AnalysisLean" }
-                  analyzedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) when the analysis completed." }
+                  analyzedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) when the analysis completed." }
                   alertsById:
                     type: object
                     description: "The alerts the analysis cites -- its probable root cause plus every hypothesis's evidence -- keyed by alert id."
@@ -5411,11 +5411,11 @@ components:
         priority: { $ref: "#/components/schemas/AlertPriority" }
         priorityOverride: { $ref: "#/components/schemas/AlertPriority" }
         assigneeId: { type: integer, format: uint64 }
-        archivedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the incident was archived at, or 0 when it is not archived." }
-        archivedUntil: { type: integer, format: int64, description: "Unix timestamp (nanoseconds) the archive lapses at, or 0 for an indefinite one. A value in the past has already lapsed, with no event to say so." }
+        archivedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) the incident was archived at, or 0 when it is not archived." }
+        archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at, or 0 for an indefinite one. A value in the past has already lapsed, with no event to say so." }
         mergedIntoId: { type: integer, format: uint64 }
         alertIds: { type: array, items: { type: integer, format: uint64 } }
-        createdAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
+        createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
 
     AlertLean:
       type: object
@@ -5432,16 +5432,16 @@ components:
             status: { $ref: "#/components/schemas/AlertStatus" }
             priority: { $ref: "#/components/schemas/AlertPriority" }
             activityState: { $ref: "#/components/schemas/AlertActivityState" }
-            createdAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
-        createdAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
+            createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
+        createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
         grouping:
           type: object
           description: How and when the alert was added to the incident.
           properties:
             attachedBy: { $ref: "#/components/schemas/IncidentAlertAttachedBy" }
             userId: { type: integer, format: uint64 }
-            attachedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
-            detachedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
+            attachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
+            detachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             movedFromIncidentId: { type: integer, format: uint64 }
       required: [id, projectId, name, type]
@@ -5496,8 +5496,8 @@ components:
             - RecommendationLeanStatusSuperseded
           enum: [pending, accepted, rejected, superseded]
         decidedBy: { type: integer, format: uint64 }
-        decidedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
-        createdAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
+        decidedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
+        createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
       required: [id, incidentId, action, status]
 
     IncidentLean:
@@ -5511,8 +5511,8 @@ components:
         suspectedRootCause: { type: string }
         probableRootCauseAlertId: { type: integer, format: uint64 }
         event: { $ref: "#/components/schemas/EventLean" }
-        createdAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
-        updatedAt: { type: integer, format: int64, description: "Unix timestamp (nanoseconds)." }
+        createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
+        updatedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
       required: [id, projectId, title]
 
     CountsResult:
