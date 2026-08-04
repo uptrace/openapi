@@ -2927,7 +2927,7 @@ paths:
       operationId: ArchiveIncidents
       description: >-
         File away every incident named in the request body until archivedUntil, or
-        indefinitely when it is omitted. An archived incident is hidden from the default
+        permanently when it is omitted. An archived incident is hidden from the default
         list. The lifecycle sweep stops ending it, so it reaches no terminal status on its
         own, and it still reopens the incident when a member regresses. Automatic grouping
         still offers it, so it goes on absorbing new alerts of the same episode and the
@@ -2946,7 +2946,7 @@ paths:
               required: [ids]
               properties:
                 ids: { type: array, items: { type: integer, format: uint64 } }
-                archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at. Must be in the future. Omit for an indefinite archive." }
+                archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at. Must be in the future. Omit for a permanent archive." }
       responses:
         "200":
           description: Archived incidents.
@@ -5413,7 +5413,7 @@ components:
         priorityOverride: { $ref: "#/components/schemas/AlertPriority" }
         assigneeId: { type: integer, format: uint64 }
         archivedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) the incident was archived at, or 0 when it is not archived." }
-        archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at, or 0 for an indefinite one. A value in the past has already lapsed, with no event to say so." }
+        archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at, or 0 for a permanent one. A value in the past has already lapsed, with no event to say so." }
         mergedIntoId: { type: integer, format: uint64 }
         alertIds: { type: array, items: { type: integer, format: uint64 } }
         createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
