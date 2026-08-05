@@ -5392,12 +5392,10 @@ components:
       type: string
       description: >-
         What drove an incident event. A note event carries a user's free-text note; the
-        other values are lifecycle, triage, and membership changes. Nothing produces
-        'acknowledged' any more, and it stays for the episodes worked before the archive
-        axis replaced acknowledgement.
+        other values are lifecycle, triage, and membership changes.
       enum:
         [created, resolved, reopened, merged, closed, priority_changed,
-         assignee_changed, archived, unarchived, acknowledged, note,
+         assignee_changed, archived, unarchived, note,
          member_attached, member_detached]
 
     EventLean:
