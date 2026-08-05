@@ -2708,10 +2708,16 @@ paths:
           schema:
             type: array
             items: { $ref: "#/components/schemas/AlertPriority" }
-        - name: assignee
+        - name: assignee[]
           in: query
-          description: Filter by assignee. A user id, or 'none' for unassigned.
-          schema: { type: string }
+          description: >-
+            Filter by owner. Repeat for multiple values. Each value is a user id, or
+            'none' for incidents nobody owns; the values are alternatives, so asking for
+            'none' and a user id returns both. A merged incident is never returned: a
+            tombstone accepts no assignment write, so nobody owns one.
+          schema:
+            type: array
+            items: { type: string }
         - $ref: "#/components/parameters/IncidentArchived"
         - name: search
           in: query
@@ -2755,7 +2761,10 @@ paths:
                 summary: { type: string }
                 alertIds: { type: array, items: { type: integer, format: uint64 } }
                 priority: { $ref: "#/components/schemas/AlertPriority" }
-                assigneeId: { type: integer, format: uint64 }
+                assigneeIds:
+                  type: array
+                  items: { type: integer, format: uint64 }
+                  description: "The incident's initial owners. Omit or send an empty set to leave it unassigned."
       responses:
         "200":
           description: The created incident.
@@ -2801,10 +2810,16 @@ paths:
           schema:
             type: array
             items: { $ref: "#/components/schemas/AlertPriority" }
-        - name: assignee
+        - name: assignee[]
           in: query
-          description: Filter by assignee. A user id, or 'none' for unassigned.
-          schema: { type: string }
+          description: >-
+            Filter by owner. Repeat for multiple values. Each value is a user id, or
+            'none' for incidents nobody owns; the values are alternatives, so asking for
+            'none' and a user id returns both. A merged incident is never returned: a
+            tombstone accepts no assignment write, so nobody owns one.
+          schema:
+            type: array
+            items: { type: string }
         - $ref: "#/components/parameters/IncidentArchived"
         - name: search
           in: query
@@ -3182,11 +3197,58 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalError" }
 
-  /internal/v1/incidents/{project_id}/{incident_id}/assignee:
+  /internal/v1/incidents/{project_id}/assignees:
+    put:
+      summary: Assign incidents in bulk
+      operationId: AssignIncidents
+      description: >-
+        Replace the owners of every named incident with the same set, or unassign them
+        when it is empty. Best effort over the set: an incident the write cannot apply
+        to -- a merged tombstone, a missing or cross-project id -- is reported under
+        skipped rather than failing the batch. Every owner must be a member of the
+        project, checked once for the whole request.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items: { type: integer, format: uint64 }
+                  description: The incidents to assign.
+                assigneeIds:
+                  type: array
+                  items: { type: integer, format: uint64 }
+                  description: The new full set of owners. An empty set unassigns them.
+      responses:
+        "200":
+          description: How many incidents the write applied to.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [assigned, skipped]
+                properties:
+                  assigned: { type: integer }
+                  skipped: { type: integer }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /internal/v1/incidents/{project_id}/{incident_id}/assignees:
     put:
       summary: Assign an incident
       operationId: AssignIncident
-      description: Set the incident's assignee. Send assigneeId=0 to unassign.
+      description: >-
+        Replace the incident's owners. An incident is owned by a flat set of co-owners,
+        so this sends the whole set; an empty set unassigns it.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -3198,7 +3260,10 @@ paths:
             schema:
               type: object
               properties:
-                assigneeId: { type: integer, format: uint64, description: "The new assignee, or 0 to unassign." }
+                assigneeIds:
+                  type: array
+                  items: { type: integer, format: uint64 }
+                  description: "The incident's new full set of owners. An empty set unassigns it."
       responses:
         "200":
           description: The updated incident.
@@ -5083,6 +5148,12 @@ components:
           format: uint64
         name:
           type: string
+        description:
+          type: string
+          description: >-
+            The monitor's description rendered when this alert's title was rendered.
+            Absent when the monitor has none, and absent on alerts last written before
+            the monitor's description was set.
         type:
           $ref: "#/components/schemas/AlertType"
         attrs:
@@ -5409,7 +5480,13 @@ components:
         status: { $ref: "#/components/schemas/IncidentStatus" }
         priority: { $ref: "#/components/schemas/AlertPriority" }
         priorityOverride: { $ref: "#/components/schemas/AlertPriority" }
-        assigneeId: { type: integer, format: uint64 }
+        assigneeIds:
+          type: array
+          items: { type: integer, format: uint64 }
+          description: >-
+            Owners this event assigned. A per-event payload, present on an assignee_changed
+            event and on a created event opened with owners, empty otherwise. The incident's
+            current owners are IncidentLean.assigneeIds.
         archivedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) the incident was archived at, or 0 when it is not archived." }
         archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at, or 0 for a permanent one. A value in the past has already lapsed, with no event to say so." }
         mergedIntoId: { type: integer, format: uint64 }
@@ -5509,6 +5586,10 @@ components:
         summary: { type: string }
         suspectedRootCause: { type: string }
         probableRootCauseAlertId: { type: integer, format: uint64 }
+        assigneeIds:
+          type: array
+          items: { type: integer, format: uint64 }
+          description: "The incident's current owners, a flat set of co-owners."
         event: { $ref: "#/components/schemas/EventLean" }
         createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
         updatedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
@@ -5536,6 +5617,20 @@ components:
             low: { type: integer }
             medium: { type: integer }
             high: { type: integer }
+        assigneeCounts:
+          type: object
+          description: >-
+            Per-owner tallies badging the assignee filter, over the other filters in
+            force. An incident with several owners counts once for each of them, so the
+            values do not sum to the population.
+          properties:
+            byUserId:
+              type: object
+              description: How many incidents each owner holds, keyed by user ID.
+              additionalProperties: { type: integer }
+            unassigned:
+              type: integer
+              description: How many incidents nobody owns.
       required: [counts, priorityCounts]
 
     User:
@@ -6535,6 +6630,15 @@ components:
       properties:
         name:
           type: string
+        description:
+          type: string
+          description: >-
+            Optional multiline alert description — runbook links and triage context,
+            shown on the alert and in notifications but never in a title or an email
+            subject. For metric and error monitors it accepts the same template
+            placeholders the name does and is rendered against the series that fired;
+            SLO descriptions are static text. Omit it or send an empty string for none.
+            At most 4000 characters after outer whitespace is trimmed.
         notifyEveryoneByEmail:
           type: boolean
         teamIds:
@@ -6779,6 +6883,15 @@ components:
         isNameTemplated:
           type: boolean
           description: True when the name contains template placeholders that are expanded at evaluation time.
+        description:
+          type: string
+          description: >-
+            The monitor's alert description, as configured. Empty when the monitor has none.
+        isDescriptionTemplated:
+          type: boolean
+          description: >-
+            True when the description contains template placeholders that are expanded at
+            evaluation time. Always false for an SLO monitor, whose description is static.
         type:
           type: string
           enum: [metric, error, slo]
