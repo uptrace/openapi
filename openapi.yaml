@@ -5330,12 +5330,18 @@ components:
         headline:
           type: string
           description: The phrase naming the outcome.
-        sentence:
+        summary:
           type: string
           description: >-
-            The lead sentence a notification opens with. Which clauses belong in it is
-            part of the derivation, so a renderer prints this rather than joining the
-            diagnostics itself.
+            What was measured and what it was judged against. Which clauses belong in
+            it is part of the derivation, so a renderer prints this rather than
+            grouping the diagnostics itself.
+        detail:
+          type: string
+          description: >-
+            What qualified the verdict: the breach recap, a hold band, how the priority
+            followed. Empty when nothing qualified it. A notification runs it after the
+            summary; a card de-emphasizes it.
         diagnostics:
           type: array
           description: The ordered clauses the verdict is explained with.
