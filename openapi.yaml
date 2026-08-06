@@ -3103,7 +3103,7 @@ paths:
     get:
       summary: Get incident analysis
       operationId: GetIncidentAnalysis
-      description: Returns the incident's latest succeeded root-cause analysis. A null analysis body means no analysis has succeeded yet.
+      description: Returns the incident's latest succeeded analysis. A null analysis body means no analysis has succeeded yet.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -3132,7 +3132,7 @@ paths:
     put:
       summary: Update incident details
       operationId: UpdateIncidentDetails
-      description: Set the incident's title, summary, and root-cause fields.
+      description: Set the incident's title and summary.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -3146,8 +3146,6 @@ paths:
               properties:
                 title: { type: string }
                 summary: { type: string }
-                suspectedRootCause: { type: string }
-                probableRootCauseAlertId: { type: integer, format: uint64 }
       responses:
         "200":
           description: The updated incident.
@@ -5528,11 +5526,12 @@ components:
             detachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             movedFromIncidentId: { type: integer, format: uint64 }
+            suspected: { type: boolean, description: "This member is marked as one of the incident's causes." }
       required: [id, projectId, name, type]
 
-    RootCauseLean:
+    HypothesisLean:
       type: object
-      description: One candidate root cause with its cited alert evidence.
+      description: One candidate explanation of the incident, with its cited alert evidence.
       properties:
         description: { type: string }
         suspectedEntity: { type: string }
@@ -5541,7 +5540,7 @@ components:
 
     AnalysisLean:
       type: object
-      description: Lean root-cause analysis output over a whole incident.
+      description: Lean analysis output over a whole incident.
       properties:
         title: { type: string }
         summary: { type: string }
@@ -5549,8 +5548,8 @@ components:
         priorityReason: { type: string }
         hypotheses:
           type: array
-          items: { $ref: "#/components/schemas/RootCauseLean" }
-        probableRootCauseAlertId: { type: integer, format: uint64 }
+          items: { $ref: "#/components/schemas/HypothesisLean" }
+        suspectedCauseAlertIds: { type: array, items: { type: integer, format: uint64 } }
         resolveRecommended: { type: boolean }
         resolveReason: { type: string }
 
@@ -5563,10 +5562,9 @@ components:
         action:
           type: string
           description: The action the recommendation argues for.
-          enum: [resolve, set_priority, set_root_cause]
+          enum: [resolve, set_priority, mark_suspected_cause]
         proposedPriority: { $ref: "#/components/schemas/AlertPriority" }
-        proposedRootCause: { type: string }
-        proposedRootCauseAlertId: { type: integer, format: uint64 }
+        proposedAlertId: { type: integer, format: uint64 }
         reason: { type: string }
         status:
           type: string
@@ -5592,8 +5590,6 @@ components:
         projectId: { type: integer, format: uint32 }
         title: { type: string }
         summary: { type: string }
-        suspectedRootCause: { type: string }
-        probableRootCauseAlertId: { type: integer, format: uint64 }
         assigneeIds:
           type: array
           items: { type: integer, format: uint64 }
