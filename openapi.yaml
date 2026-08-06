@@ -5490,13 +5490,23 @@ components:
         status: { $ref: "#/components/schemas/IncidentStatus" }
         priority: { $ref: "#/components/schemas/AlertPriority" }
         priorityOverride: { $ref: "#/components/schemas/AlertPriority" }
-        assigneeIds:
+        addedAssigneeIds:
           type: array
           items: { type: integer, format: uint64 }
           description: >-
-            Owners this event assigned. A per-event payload, present on an assignee_changed
-            event and on a created event opened with owners, empty otherwise. The incident's
-            current owners are IncidentSummary.assigneeIds.
+            Owners this event put on the incident. A per-event payload, present on an
+            assignee_changed event and on a created event opened with owners, empty
+            otherwise. The incident's current owners are IncidentSummary.assigneeIds.
+        removedAssigneeIds:
+          type: array
+          items: { type: integer, format: uint64 }
+          description: >-
+            Owners this event took off the incident, present on an assignee_changed event
+            and empty otherwise. It is the set this write removed, measured against the
+            owners held at the time of the write. Do not derive a removal by comparing one
+            event with the one before it: an ownership also ends when its owner leaves the
+            organization, which records no event, so an inferred removal names the wrong
+            actor.
         archivedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) the incident was archived at, or 0 when it is not archived." }
         archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at, or 0 for a permanent one. A value in the past has already lapsed, with no event to say so." }
         mergedIntoId: { type: integer, format: uint64 }
