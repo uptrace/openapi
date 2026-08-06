@@ -5249,9 +5249,17 @@ components:
           type: object
           additionalProperties: true
           description: >-
-            Immutable record of the event: the monitor query and column it was judged
-            by, and the evidence of the check that produced it. Its shape follows the
-            alert type.
+            Immutable replay identity of the event: the monitor query, the column it
+            was judged by, and the resolution its snapshot was sampled at. Its shape
+            follows the alert type.
+        evidence:
+          type: object
+          additionalProperties: true
+          description: >-
+            Immutable technical record of the evaluation or action that produced the
+            event: what the check found, what it was judged against, and the
+            configuration pinned at the time. Its shape follows the alert type.
+            Absent on note and assignment events, which record no evaluation.
         status:
           $ref: "#/components/schemas/AlertStatus"
         activityState:
