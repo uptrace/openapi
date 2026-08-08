@@ -9,4 +9,4 @@ This directory is a git submodule. The source of truth is `openapi.yaml`.
 - All `/internal/v1` endpoints are beta.
 - Lint with `pnpm lint`.
 - Preview with `pnpm serve`.
-- If schema changes affect generated Go clients or MCP code, run `task generate:uptraceapi` from the repo root.
+- If schema changes affect generated Go clients or MCP code, run `task generate:uptraceapi` from the repo root. The app's `TestClientUpToDate` fails until you do.
