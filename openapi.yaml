@@ -1116,7 +1116,7 @@ paths:
                 summary: Metric monitor
                 value:
                   name: Number of spans per minute
-                  type: metric
+                  type: threshold
                   notifyEveryoneByEmail: true
                   teamIds: [123]
                   channelIds: [123]
@@ -1131,11 +1131,8 @@ paths:
                       'myservice'"
                     column:
                       name: spans
-                    detector:
-                      type: manual
-                      params:
-                        minValue: 100
-                        maxValue: 1000
+                    minValue: 100
+                    maxValue: 1000
               errorMonitor:
                 summary: Error monitor
                 value:
@@ -1162,7 +1159,7 @@ paths:
                 monitor:
                   id: 3807
                   name: Number of spans per minute
-                  type: metric
+                  type: threshold
                   status: active
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -1221,7 +1218,7 @@ paths:
                 summary: Metric monitor
                 value:
                   name: Number of spans per minute
-                  type: metric
+                  type: threshold
                   notifyEveryoneByEmail: true
                   teamIds: [123]
                   channelIds: [123]
@@ -1236,11 +1233,8 @@ paths:
                       'myservice'"
                     column:
                       name: spans
-                    detector:
-                      type: manual
-                      params:
-                        minValue: 100
-                        maxValue: 1000
+                    minValue: 100
+                    maxValue: 1000
               errorMonitor:
                 summary: Error monitor
                 value:
@@ -1267,7 +1261,7 @@ paths:
                 monitor:
                   id: 3807
                   name: Number of spans per minute
-                  type: metric
+                  type: threshold
                   status: active
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -5079,8 +5073,10 @@ components:
     AlertType:
       type: string
       description: >-
-        Alert type. An slo alert is fired by one burn-rate rule of an SLO monitor.
-      enum: [error, metric, slo]
+        Alert type: the type of the monitor that filed the alert. The four metric
+        kinds differ in the decision that produced the alert, not in its shape. An
+        slo alert is fired by one burn-rate rule of an SLO monitor.
+      enum: [threshold, anomaly, outlier, forecast, error, slo]
 
     AlertStatus:
       type: string
@@ -5475,10 +5471,12 @@ components:
       type: string
       description: >-
         What drove an incident event. A note event carries a user's free-text note; the
-        other values are lifecycle, triage, and membership changes.
+        other values are lifecycle, triage, and membership changes. Nothing produces
+        'acknowledged' any more, and it stays for the episodes worked before the archive
+        axis replaced acknowledgement.
       enum:
         [created, resolved, reopened, merged, closed, priority_changed,
-         assignee_changed, archived, unarchived, note,
+         assignee_changed, acknowledged, archived, unarchived, note,
          member_attached, member_detached]
 
     EventSummary:
@@ -6153,7 +6151,7 @@ components:
         type:
           type: string
           description: Alert type to close.
-          enum: [error, metric, slo]
+          enum: [threshold, anomaly, outlier, forecast, error, slo]
         attrs:
           type: object
           additionalProperties:
@@ -6669,8 +6667,8 @@ components:
           type: string
           description: >-
             How readily an alert escalates on its hourly trend and how soon it
-            declares recovery. An alert-lifecycle dial; not the anomaly
-            detector's own sensitivity, which is set per detector.
+            declares recovery. An alert-lifecycle dial; not the anomaly kind's own
+            sensitivity, which is a monitor param.
           enum: [very_low, low, medium, high, very_high]
       required:
         - name
@@ -6681,8 +6679,16 @@ components:
           properties:
             type:
               type: string
+              description: >-
+                Which decision the monitor makes. It selects which of the params' knobs
+                apply: minValue/maxValue/recovery for threshold, preset/minVolume/minChange
+                for anomaly, minPeers for outlier, horizon with minValue/maxValue for
+                forecast.
               enum:
-                - metric
+                - threshold
+                - anomaly
+                - outlier
+                - forecast
             params:
               $ref: "#/components/schemas/MetricMonitorParams"
           required:
@@ -6727,52 +6733,69 @@ components:
         timeOffset:
           type: number
           description: Time offset in milliseconds.
-        detector:
-          $ref: "#/components/schemas/DetectorConfig"
+        minValue:
+          type: number
+          description: >-
+            Lower threshold. threshold fires when the value drops below it; forecast when
+            a crossing below it is projected within the horizon.
+        maxValue:
+          type: number
+          description: >-
+            Upper threshold. threshold fires when the value exceeds it; forecast when a
+            crossing above it is projected within the horizon.
+        recovery:
+          $ref: "#/components/schemas/Recovery"
+        preset:
+          type: string
+          description: The shape the anomaly model assumes.
+          enum: [general, latency, counter]
+        minVolume:
+          type: number
+          description: >-
+            Minimum value a point must reach before it can be scored as anomalous, so a
+            quiet series does not alert on noise.
+        minChange:
+          type: number
+          description: >-
+            Minimum departure from the expected value before a point is reported as
+            anomalous.
+        sensitivity:
+          type: string
+          description: >-
+            How readily the anomaly and outlier kinds fire. very_low is strict (fewer
+            alerts), very_high lenient.
+          enum: [very_low, low, medium, high, very_high]
+        direction:
+          type: string
+          description: Which side of the expected range fires.
+          enum: [both, above, below]
+        seasonality:
+          type: string
+          description: >-
+            Whether the anomaly and forecast models fit a repeating cycle. auto fits the
+            cycles the training window supports.
+          enum: [auto, off]
+        minBreachPoints:
+          type: integer
+          description: >-
+            How many points of the evaluation window must breach before the monitor fires.
+            Must not exceed numEvalPoints.
+        trainingPeriod:
+          type: number
+          description: >-
+            How much history the anomaly and forecast models are fitted on, in
+            milliseconds.
+        horizon:
+          type: number
+          description: >-
+            How far ahead the forecast projects, in milliseconds: it fires on a crossing
+            expected within this.
+        minPeers:
+          type: integer
+          description: Minimum peer series in a group before the outlier kind scores it.
       required:
         - metrics
         - query
-        - detector
-    DetectorConfig:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-            - manual
-            - auto
-        params:
-          oneOf:
-            - $ref: "#/components/schemas/ManualDetectorParams"
-            - $ref: "#/components/schemas/AutoDetectorParams"
-      required:
-        - type
-        - params
-    ManualDetectorParams:
-      type: object
-      properties:
-        minValue:
-          type: number
-        maxValue:
-          type: number
-        recovery:
-          $ref: "#/components/schemas/Recovery"
-    AutoDetectorParams:
-      type: object
-      properties:
-        tolerance:
-          type: string
-          enum:
-            - low
-            - medium
-            - high
-        trainingPeriod:
-          type: number
-          description: Training period in milliseconds.
-        minDevFraction:
-          type: number
-        minDevAbsolute:
-          type: number
     ErrorMonitorParams:
       type: object
       properties:
@@ -6904,7 +6927,12 @@ components:
             evaluation time. Always false for an SLO monitor, whose description is static.
         type:
           type: string
-          enum: [metric, error, slo]
+          description: >-
+            The decision this monitor makes. threshold fires outside a fixed range you
+            state, anomaly on a departure from a model fitted on history, outlier on a
+            series that departs from its peers, forecast on a crossing projected within
+            the horizon; error fires on matching log records and slo on a burn-rate rule.
+          enum: [threshold, anomaly, outlier, forecast, error, slo]
         status:
           type: string
           enum: [active, paused, firing, no_data, disabled]
@@ -6954,8 +6982,8 @@ components:
           type: string
           description: >-
             How readily an alert escalates on its hourly trend and how soon it
-            declares recovery. An alert-lifecycle dial; not the anomaly
-            detector's own sensitivity, which is set per detector.
+            declares recovery. An alert-lifecycle dial; not the anomaly kind's own
+            sensitivity, which is a monitor param.
           enum: [very_low, low, medium, high, very_high]
         trendUpdatedAt:
           type: number
