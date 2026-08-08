@@ -2736,7 +2736,7 @@ paths:
                 properties:
                   incidents:
                     type: array
-                    items: { $ref: "#/components/schemas/IncidentLean" }
+                    items: { $ref: "#/components/schemas/IncidentSummary" }
                   count: { type: integer, format: int64, description: "Total number of matching incidents." }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -2774,7 +2774,7 @@ paths:
                 type: object
                 required: [incident]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
                   skipped:
                     type: array
                     items: { type: integer, format: uint64 }
@@ -3032,7 +3032,7 @@ paths:
                 type: object
                 required: [incident]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3061,7 +3061,7 @@ paths:
                 properties:
                   alerts:
                     type: array
-                    items: { $ref: "#/components/schemas/AlertLean" }
+                    items: { $ref: "#/components/schemas/AlertSummary" }
                   count: { type: integer }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -3091,7 +3091,7 @@ paths:
                 properties:
                   events:
                     type: array
-                    items: { $ref: "#/components/schemas/EventLean" }
+                    items: { $ref: "#/components/schemas/EventSummary" }
                   count: { type: integer }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -3116,12 +3116,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  analysis: { $ref: "#/components/schemas/AnalysisLean" }
+                  analysis: { $ref: "#/components/schemas/AnalysisSummary" }
                   analyzedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) when the analysis completed." }
                   alertsById:
                     type: object
                     description: "The alerts the analysis cites -- its probable root cause plus every hypothesis's evidence -- keyed by alert id."
-                    additionalProperties: { $ref: "#/components/schemas/AlertLean" }
+                    additionalProperties: { $ref: "#/components/schemas/AlertSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3155,7 +3155,7 @@ paths:
                 type: object
                 required: [incident]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3188,7 +3188,7 @@ paths:
                 type: object
                 required: [incident]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3271,7 +3271,7 @@ paths:
                 type: object
                 required: [incident]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3305,7 +3305,7 @@ paths:
                 type: object
                 required: [incident]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
                   skipped:
                     type: array
                     items: { type: integer, format: uint64 }
@@ -3346,7 +3346,7 @@ paths:
                 type: object
                 required: [incident]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3380,7 +3380,7 @@ paths:
                 type: object
                 required: [incident]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3414,7 +3414,7 @@ paths:
                 type: object
                 required: [note]
                 properties:
-                  note: { $ref: "#/components/schemas/EventLean" }
+                  note: { $ref: "#/components/schemas/EventSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3455,7 +3455,7 @@ paths:
                 type: object
                 required: [note]
                 properties:
-                  note: { $ref: "#/components/schemas/EventLean" }
+                  note: { $ref: "#/components/schemas/EventSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3485,7 +3485,7 @@ paths:
                 type: object
                 required: [note]
                 properties:
-                  note: { $ref: "#/components/schemas/EventLean" }
+                  note: { $ref: "#/components/schemas/EventSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3514,7 +3514,7 @@ paths:
                 properties:
                   recommendations:
                     type: array
-                    items: { $ref: "#/components/schemas/RecommendationLean" }
+                    items: { $ref: "#/components/schemas/RecommendationSummary" }
                   count: { type: integer }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -3554,8 +3554,8 @@ paths:
                 type: object
                 required: [incident, recommendation]
                 properties:
-                  incident: { $ref: "#/components/schemas/IncidentLean" }
-                  recommendation: { $ref: "#/components/schemas/RecommendationLean" }
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
+                  recommendation: { $ref: "#/components/schemas/RecommendationSummary" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -5481,9 +5481,9 @@ components:
          assignee_changed, archived, unarchived, note,
          member_attached, member_detached]
 
-    EventLean:
+    EventSummary:
       type: object
-      description: A lean incident event carrying the lifecycle state at a point in time.
+      description: A reduced incident event carrying the lifecycle state at a point in time.
       properties:
         id: { type: integer, format: uint64, description: "Event ID. For a note event this is the noteId passed to update_incident_note and delete_incident_note." }
         name: { $ref: "#/components/schemas/EventName" }
@@ -5498,16 +5498,16 @@ components:
           description: >-
             Owners this event assigned. A per-event payload, present on an assignee_changed
             event and on a created event opened with owners, empty otherwise. The incident's
-            current owners are IncidentLean.assigneeIds.
+            current owners are IncidentSummary.assigneeIds.
         archivedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) the incident was archived at, or 0 when it is not archived." }
         archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at, or 0 for a permanent one. A value in the past has already lapsed, with no event to say so." }
         mergedIntoId: { type: integer, format: uint64 }
         alertIds: { type: array, items: { type: integer, format: uint64 } }
         createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
 
-    AlertLean:
+    AlertSummary:
       type: object
-      description: A lean alert in an incident's roster, with its grouping facts.
+      description: A reduced alert in an incident's roster, with its grouping facts.
       properties:
         id: { type: integer, format: uint64 }
         projectId: { type: integer, format: uint32 }
@@ -5535,7 +5535,7 @@ components:
             suspected: { type: boolean, description: "This member is marked as one of the incident's causes." }
       required: [id, projectId, name, type]
 
-    HypothesisLean:
+    HypothesisSummary:
       type: object
       description: One candidate explanation of the incident, with its cited alert evidence.
       properties:
@@ -5544,9 +5544,9 @@ components:
         evidenceAlertIds: { type: array, items: { type: integer, format: uint64 } }
         confidence: { type: number, format: double }
 
-    AnalysisLean:
+    AnalysisSummary:
       type: object
-      description: Lean analysis output over a whole incident.
+      description: Reduced analysis output over a whole incident.
       properties:
         title: { type: string }
         summary: { type: string }
@@ -5554,14 +5554,14 @@ components:
         priorityReason: { type: string }
         hypotheses:
           type: array
-          items: { $ref: "#/components/schemas/HypothesisLean" }
+          items: { $ref: "#/components/schemas/HypothesisSummary" }
         suspectedCauseAlertIds: { type: array, items: { type: integer, format: uint64 } }
         resolveRecommended: { type: boolean }
         resolveReason: { type: string }
 
-    RecommendationLean:
+    RecommendationSummary:
       type: object
-      description: A lean server-derived, human-gated proposal to act on an incident.
+      description: A reduced server-derived, human-gated proposal to act on an incident.
       properties:
         id: { type: integer, format: uint64 }
         incidentId: { type: integer, format: uint64 }
@@ -5578,19 +5578,19 @@ components:
           # Prefix the generated constants so they do not collide with the bare Accepted
           # (InviteStatus) and Pending (TemplateStatus) enum values elsewhere in the client.
           x-enum-names:
-            - RecommendationLeanStatusPending
-            - RecommendationLeanStatusAccepted
-            - RecommendationLeanStatusRejected
-            - RecommendationLeanStatusSuperseded
+            - RecommendationSummaryStatusPending
+            - RecommendationSummaryStatusAccepted
+            - RecommendationSummaryStatusRejected
+            - RecommendationSummaryStatusSuperseded
           enum: [pending, accepted, rejected, superseded]
         decidedBy: { type: integer, format: uint64 }
         decidedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
         createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
       required: [id, incidentId, action, status]
 
-    IncidentLean:
+    IncidentSummary:
       type: object
-      description: A lean incident grouping one or more related alerts.
+      description: A reduced incident grouping one or more related alerts.
       properties:
         id: { type: integer, format: uint64 }
         projectId: { type: integer, format: uint32 }
@@ -5600,7 +5600,7 @@ components:
           type: array
           items: { type: integer, format: uint64 }
           description: "The incident's current owners, a flat set of co-owners."
-        event: { $ref: "#/components/schemas/EventLean" }
+        event: { $ref: "#/components/schemas/EventSummary" }
         createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
         updatedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
       required: [id, projectId, title]
