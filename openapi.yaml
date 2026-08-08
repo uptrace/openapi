@@ -5588,7 +5588,10 @@ components:
 
     IncidentSummary:
       type: object
-      description: A reduced incident grouping one or more related alerts.
+      description: >-
+        A reduced incident grouping one or more related alerts. The name says this is
+        the reduced view of an incident. The summary property is a different thing: the
+        incident's own written description of what is happening.
       properties:
         id: { type: integer, format: uint64 }
         projectId: { type: integer, format: uint32 }
