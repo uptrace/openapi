@@ -5245,9 +5245,18 @@ components:
           type: object
           additionalProperties: true
           description: >-
-            Immutable replay identity of the event: the monitor query, the column it
-            was judged by, and the resolution its snapshot was sampled at. Its shape
-            follows the alert type.
+            Immutable replay identity of the event. On an evaluation event its shape
+            follows the alert type: the monitor query, the column it was judged by,
+            and the resolution its snapshot was sampled at. The two events that record
+            no evaluation carry their own act instead. A note event carries text, the
+            body of the note. An assigned event carries the ownership move:
+            addedUserIds and removedUserIds, the owners this event put on the alert
+            and took off it, each an array of user ids and each omitted when that side
+            of the move is empty. It is the move itself, measured against the owners
+            held at the time of the write. Do not derive a removal by comparing one
+            event with the one before it: an ownership also ends when its owner leaves
+            the organization, which records no event, so an inferred removal names the
+            wrong actor. The alert's current owners are Alert.assigneeIds.
         evidence:
           type: object
           additionalProperties: true
