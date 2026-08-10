@@ -2707,8 +2707,9 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
             'none' for incidents nobody owns; the values are alternatives, so asking for
-            'none' and a user id returns both. A merged incident is never returned: a
-            tombstone accepts no assignment write, so nobody owns one.
+            'none' and a user id returns both. A merged incident is never returned, even
+            when it has owners: a tombstone redirects to its survivor, and this asks what
+            a responder owns now.
           schema:
             type: array
             items: { type: string }
@@ -2809,8 +2810,9 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
             'none' for incidents nobody owns; the values are alternatives, so asking for
-            'none' and a user id returns both. A merged incident is never returned: a
-            tombstone accepts no assignment write, so nobody owns one.
+            'none' and a user id returns both. A merged incident is never returned, even
+            when it has owners: a tombstone redirects to its survivor, and this asks what
+            a responder owns now.
           schema:
             type: array
             items: { type: string }
