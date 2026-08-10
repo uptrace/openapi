@@ -2707,8 +2707,9 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
             'none' for incidents nobody owns; the values are alternatives, so asking for
-            'none' and a user id returns both. A merged incident is never returned: a
-            tombstone accepts no assignment write, so nobody owns one.
+            'none' and a user id returns both. A merged incident is never returned, even
+            when it has owners: a tombstone redirects to its survivor, and this asks what
+            a responder owns now.
           schema:
             type: array
             items: { type: string }
@@ -2809,8 +2810,9 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
             'none' for incidents nobody owns; the values are alternatives, so asking for
-            'none' and a user id returns both. A merged incident is never returned: a
-            tombstone accepts no assignment write, so nobody owns one.
+            'none' and a user id returns both. A merged incident is never returned, even
+            when it has owners: a tombstone redirects to its survivor, and this asks what
+            a responder owns now.
           schema:
             type: array
             items: { type: string }
@@ -5243,9 +5245,18 @@ components:
           type: object
           additionalProperties: true
           description: >-
-            Immutable replay identity of the event: the monitor query, the column it
-            was judged by, and the resolution its snapshot was sampled at. Its shape
-            follows the alert type.
+            Immutable replay identity of the event. On an evaluation event its shape
+            follows the alert type: the monitor query, the column it was judged by,
+            and the resolution its snapshot was sampled at. The two events that record
+            no evaluation carry their own act instead. A note event carries text, the
+            body of the note. An assigned event carries the ownership move:
+            addedUserIds and removedUserIds, the owners this event put on the alert
+            and took off it, each an array of user ids and each omitted when that side
+            of the move is empty. It is the move itself, measured against the owners
+            held at the time of the write. Do not derive a removal by comparing one
+            event with the one before it: an ownership also ends when its owner leaves
+            the organization, which records no event, so an inferred removal names the
+            wrong actor. The alert's current owners are Alert.assigneeIds.
         evidence:
           type: object
           additionalProperties: true
@@ -5490,13 +5501,23 @@ components:
         status: { $ref: "#/components/schemas/IncidentStatus" }
         priority: { $ref: "#/components/schemas/AlertPriority" }
         priorityOverride: { $ref: "#/components/schemas/AlertPriority" }
-        assigneeIds:
+        addedAssigneeIds:
           type: array
           items: { type: integer, format: uint64 }
           description: >-
-            Owners this event assigned. A per-event payload, present on an assignee_changed
-            event and on a created event opened with owners, empty otherwise. The incident's
-            current owners are IncidentSummary.assigneeIds.
+            Owners this event put on the incident. A per-event payload, present on an
+            assignee_changed event and on a created event opened with owners, empty
+            otherwise. The incident's current owners are IncidentSummary.assigneeIds.
+        removedAssigneeIds:
+          type: array
+          items: { type: integer, format: uint64 }
+          description: >-
+            Owners this event took off the incident, present on an assignee_changed event
+            and empty otherwise. It is the set this write removed, measured against the
+            owners held at the time of the write. Do not derive a removal by comparing one
+            event with the one before it: an ownership also ends when its owner leaves the
+            organization, which records no event, so an inferred removal names the wrong
+            actor.
         archivedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) the incident was archived at, or 0 when it is not archived." }
         archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at, or 0 for a permanent one. A value in the past has already lapsed, with no event to say so." }
         mergedIntoId: { type: integer, format: uint64 }
