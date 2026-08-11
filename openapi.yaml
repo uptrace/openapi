@@ -6771,8 +6771,8 @@ components:
           $ref: "#/components/schemas/Recovery"
         preset:
           type: string
-          description: The shape the anomaly model assumes.
-          enum: [general, latency, counter]
+          description: The anomaly model preset. General supports every metric shape.
+          enum: [general]
         minVolume:
           type: number
           description: >-
