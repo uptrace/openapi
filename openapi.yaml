@@ -2685,8 +2685,9 @@ paths:
       summary: List incidents
       operationId: ListIncidents
       description: >-
-        List incidents, filterable by status, priority, assignee, archive, and free-text
-        search. Archived incidents are excluded unless the archived parameter asks for them.
+        List incidents, filterable by status, priority, assignee, and free-text search. A
+        request that names no status excludes archived incidents, so a short listing may be
+        hiding some; ask for them with status=archived.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2713,7 +2714,6 @@ paths:
           schema:
             type: array
             items: { type: string }
-        - $ref: "#/components/parameters/IncidentArchived"
         - name: search
           in: query
           description: Free-text search across incident title.
@@ -2787,9 +2787,10 @@ paths:
       summary: Incident counts
       operationId: IncidentCounts
       description: >-
-        Returns per-status and per-priority tallies for the project's incidents. A tally
-        counts what the same filter would list, so archived incidents are excluded unless
-        the archived parameter asks for them.
+        Returns per-status and per-priority tallies for the project's incidents. archived
+        carries its own tally like the other four statuses, and the all count is the union
+        of the five - more than a listing that names no status shows, because that listing
+        leaves archived out.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2816,7 +2817,6 @@ paths:
           schema:
             type: array
             items: { type: string }
-        - $ref: "#/components/parameters/IncidentArchived"
         - name: search
           in: query
           description: Free-text search across incident title.
@@ -4927,15 +4927,6 @@ components:
       schema:
         type: integer
         format: uint32
-    IncidentArchived:
-      name: archived
-      in: query
-      description: >-
-        Include archived incidents. Omit or false to exclude them, which is what a person
-        triaging sees. True returns the whole population, for a caller naming a target
-        rather than working a list.
-      schema:
-        type: boolean
     OrgId:
       name: org_id
       in: path
@@ -5457,8 +5448,11 @@ components:
 
     IncidentStatus:
       type: string
-      description: Incident lifecycle status.
-      enum: [open, resolved, merged, closed]
+      description: >-
+        Incident lifecycle status. archived is a live status like open and resolved: a
+        filed-away incident goes on absorbing alerts and takes every edit, and it is what
+        list and counts leave out of a listing that names no status.
+      enum: [open, resolved, merged, closed, archived]
 
     IncidentAlertAttachedBy:
       type: string
