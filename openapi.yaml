@@ -5335,7 +5335,7 @@ components:
         detail:
           type: string
           description: >-
-            What qualified the verdict: the breach recap, a hold band, how the priority
+            What qualified the verdict: the breach recap, a hysteresis band, how the priority
             followed. Empty when nothing qualified it. A notification runs it after the
             summary; a card de-emphasizes it.
         diagnostics:
