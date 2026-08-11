@@ -2686,8 +2686,8 @@ paths:
       operationId: ListIncidents
       description: >-
         List incidents, filterable by status, priority, assignee, and free-text search. A
-        request that names no status excludes archived incidents, so a short listing may be
-        hiding some; ask for them with status=archived.
+        request that names no status lists every status, archived included; name a status
+        to work one of them.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2789,8 +2789,7 @@ paths:
       description: >-
         Returns per-status and per-priority tallies for the project's incidents. archived
         carries its own tally like the other four statuses, and the all count is the union
-        of the five - more than a listing that names no status shows, because that listing
-        leaves archived out.
+        of the five - the same population a listing that names no status returns.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -5648,9 +5647,8 @@ components:
         counts:
           type: object
           description: >-
-            Per-status counts over one population, so all is the sum of the five statuses.
-            A listing that names no status shows fewer than all, because it leaves archived
-            out.
+            Per-status counts over one population, so all is the sum of the five statuses
+            and is what a listing that names no status returns.
           properties:
             all: { type: integer, description: "Every incident the filter matches, archived included." }
             open: { type: integer }
