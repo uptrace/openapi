@@ -5459,6 +5459,15 @@ components:
       description: What attached an alert to an incident.
       enum: [user, genai]
 
+    IncidentAlertDetachReason:
+      type: string
+      description: >-
+        Why a membership ended, absent while the alert is still a member. The three are not
+        interchangeable: only user is a deliberate correction, so only it stops automatic
+        grouping attaching the alert to that incident again. closed and merged release
+        members as a consequence of the incident's own transition and block nothing.
+      enum: [user, closed, merged]
+
     IncidentGroupingDecision:
       type: object
       description: The automatic grouper's decision that attached an alert, kept so the grouping can be reviewed later.
@@ -5543,6 +5552,7 @@ components:
             userId: { type: integer, format: uint64 }
             attachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             detachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
+            detachReason: { $ref: "#/components/schemas/IncidentAlertDetachReason" }
             decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             movedFromIncidentId: { type: integer, format: uint64 }
             suspected: { type: boolean, description: "This member is marked as one of the incident's causes." }
