@@ -5646,14 +5646,17 @@ components:
       properties:
         counts:
           type: object
-          description: Per-status counts.
+          description: >-
+            Per-status counts over one population, so all is the sum of the five statuses.
+            A listing that names no status shows fewer than all, because it leaves archived
+            out.
           properties:
-            all: { type: integer }
+            all: { type: integer, description: "Every incident the filter matches, archived included." }
             open: { type: integer }
             resolved: { type: integer }
             merged: { type: integer }
             closed: { type: integer }
-            archived: { type: integer, description: "How many archived incidents the archive scope leaves out. Every other tally counts inside that scope." }
+            archived: { type: integer }
         priorityCounts:
           type: object
           description: Per-priority counts.
