@@ -5626,10 +5626,19 @@ components:
           type: array
           items: { type: integer, format: uint64 }
           description: "The incident's current owners, a flat set of co-owners."
-        event: { $ref: "#/components/schemas/EventSummary" }
+        status: { $ref: "#/components/schemas/IncidentStatus" }
+        priority:
+          allOf: [{ $ref: "#/components/schemas/AlertPriority" }]
+          description: >-
+            The effective tier: the highest of the incident's members, or the tier a person
+            pinned over them.
+        archivedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) somebody filed the incident away at, or 0 when nothing is on record. Leaving the archive clears it, so 0 does not say the incident was never archived." }
+        archivedUntil: { type: number, format: double, description: "Unix timestamp (milliseconds) the archive lapses at, or 0 for a permanent one. A value in the past has already lapsed, with no event to say so." }
+        mergedIntoId: { type: integer, format: uint64, description: "The survivor this incident was folded into, set while status is merged. It is 0 on a merged incident whose survivor has since been deleted." }
+        resolvedAt: { type: number, format: double, description: "Unix timestamp (milliseconds) the incident entered its current resolved state, and what the reopen and auto-close windows count from. 0 in every status but resolved and archived, which keeps it so the auto-close clock survives the archive." }
         createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
         updatedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
-      required: [id, projectId, title]
+      required: [id, projectId, title, status, priority]
 
     CountsResult:
       type: object
