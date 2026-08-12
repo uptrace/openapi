@@ -2633,9 +2633,9 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
             'none' for incidents nobody owns; the values are alternatives, so asking for
-            'none' and a user id returns both. A merged incident is never returned, even
-            when it has owners: a tombstone redirects to its survivor, and this asks what
-            a responder owns now.
+            'none' and a user id returns both. It holds back no status of its own: a merged
+            tombstone keeps the owners it had and is returned for them, and narrowing that
+            is what the status filter is for.
           schema:
             type: array
             items: { type: string }
@@ -2735,9 +2735,9 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
             'none' for incidents nobody owns; the values are alternatives, so asking for
-            'none' and a user id returns both. A merged incident is never returned, even
-            when it has owners: a tombstone redirects to its survivor, and this asks what
-            a responder owns now.
+            'none' and a user id returns both. It holds back no status of its own: a merged
+            tombstone keeps the owners it had and is returned for them, and narrowing that
+            is what the status filter is for.
           schema:
             type: array
             items: { type: string }
