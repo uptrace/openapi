@@ -2937,14 +2937,17 @@ paths:
       operationId: ArchiveIncidents
       description: >-
         File away every incident named in the request body until archivedUntil, or
-        permanently when it is omitted. An archived incident is hidden from the default
-        list. The archive suppresses the whole lifecycle while the window holds: there is
-        no auto-resolve, no auto-close, and a member that fires again leaves the incident
-        where it is. When the window lapses the incident returns to the status its alerts
-        support. Automatic grouping still offers it, so it goes on absorbing new alerts of
-        the same episode and the window survives the attach. Its member alerts are not
-        archived either, so they go on firing and notifying. A window already in force is
-        replaced, in either direction.
+        permanently when it is omitted. An archived incident leaves a listing that names
+        status=open, and a listing that names no status still returns it. The archive
+        suppresses the whole lifecycle while the window holds: there is no auto-resolve, no
+        auto-close, and a member that fires again leaves the incident where it is. The
+        auto-close clock stops with the rest, so a window of any length costs the episode
+        only the time it was hidden. When the window lapses the incident returns to the
+        status its alerts support, except one somebody reopened by hand, which returns to
+        open whatever its members say. Automatic grouping still offers it, so it goes on
+        absorbing new alerts of the same episode and the window survives the attach. Its
+        member alerts are not archived either, so they go on firing and notifying. A window
+        already in force is replaced, in either direction.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -5450,8 +5453,8 @@ components:
       type: string
       description: >-
         Incident lifecycle status. archived is a live status like open and resolved: a
-        filed-away incident goes on absorbing alerts and takes every edit, and it is what
-        list and counts leave out of a listing that names no status.
+        filed-away incident goes on absorbing alerts and takes every edit, and a listing
+        that names no status returns it like any other.
       enum: [open, resolved, merged, closed, archived]
 
     IncidentAlertAttachedBy:
