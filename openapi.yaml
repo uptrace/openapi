@@ -2998,13 +2998,26 @@ paths:
     get:
       summary: List incident events
       operationId: ListIncidentEvents
-      description: The incident's activity feed, oldest first.
+      description: >-
+        The incident's activity feed, newest first. The page is capped, so it keeps the newest
+        entries and drops the oldest: a feed read to decide what to do now needs the recent
+        end. Walk older entries with page.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
         - $ref: "#/components/parameters/IncidentId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Page"
+        - name: name
+          in: query
+          required: false
+          description: >-
+            Keep only these event kinds. Repeatable, and an absent parameter asks for every
+            kind. It narrows the whole log rather than the page, so count follows it while
+            countsByName does not.
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/EventName" }
       responses:
         "200":
           description: The incident's events.
@@ -3017,7 +3030,20 @@ paths:
                   events:
                     type: array
                     items: { $ref: "#/components/schemas/EventSummary" }
-                  count: { type: integer }
+                  count:
+                    type: integer
+                    description: >-
+                      How many events the request's own scope holds, which is what a pager
+                      reads. It follows the name filter.
+                  countsByName:
+                    type: object
+                    additionalProperties: { type: integer }
+                    description: >-
+                      How many events of each kind the incident's whole log holds, keyed by
+                      event name. It follows neither the page nor the name filter, so a kind
+                      chip can say how many entries of its kind exist while it is unselected
+                      and while the reader is on a later page. A kind with no entry is absent
+                      rather than zero.
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
