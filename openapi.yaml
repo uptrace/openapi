@@ -5403,6 +5403,30 @@ components:
         sweep, the automatic grouper, and every other entry nobody pressed.
       enum: [person, system]
 
+    IncidentMemberReading:
+      type: string
+      description: >-
+        What an incident's membership read when a transition was decided. It is the evidence
+        behind resolved, closed, reopened and unarchived, and it is absent on every other event
+        and on those four where nothing was read: a person's plain resolve or close states a
+        verdict rather than deriving one, and an entry written before the reading was recorded
+        carries none.
+
+
+        The same reading means different things under different event names, which is why it is
+        one field. A closed event reading quiet is an episode that faded past its auto-close
+        period. A closed event reading firing is a member that fired again after the reopen
+        window, so the episode ended there and that member is free to open a new incident. A
+        reopened event reading quiet is a person overruling silence, which is the one condition
+        that holds an incident open against the lifecycle sweep.
+
+
+        firing is at least one member firing at that moment. quiet is no member firing and none
+        archived. inconclusive is no member firing and at least one archived: nobody listens to
+        an archived member, so its quiet is no evidence the episode ended, and only the
+        transition out of the archive records it.
+      enum: [firing, quiet, inconclusive]
+
     IncidentAlertDetachReason:
       type: string
       description: >-
@@ -5445,6 +5469,7 @@ components:
         name: { $ref: "#/components/schemas/EventName" }
         userId: { type: integer, format: uint64, description: "Person who caused the event, when one did (e.g. a note's author). It is 0 both for an automatic event and for one whose author has since been deleted, so read actor to tell those apart and read this only to name the person." }
         actor: { $ref: "#/components/schemas/IncidentEventActor" }
+        memberReading: { $ref: "#/components/schemas/IncidentMemberReading" }
         note: { type: string, description: "Free-text body of a note event; empty for other event types." }
         status: { $ref: "#/components/schemas/IncidentStatus" }
         priority: { $ref: "#/components/schemas/AlertPriority" }
