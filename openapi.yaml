@@ -5425,7 +5425,13 @@ components:
         archived. inconclusive is no member firing and at least one archived: nobody listens to
         an archived member, so its quiet is no evidence the episode ended, and only the
         transition out of the archive records it.
-      enum: [firing, quiet, inconclusive]
+
+
+        quiet_after_firing is the wider read a held incident's resolve makes: no member firing,
+        and a member that fired after the person's reopen and has since recovered. That episode
+        is what releases their hold, so only that resolve records this value. A plain
+        auto-resolve asks only what is firing now and records quiet.
+      enum: [firing, quiet, quiet_after_firing, inconclusive]
 
     IncidentAlertDetachReason:
       type: string
