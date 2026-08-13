@@ -5476,6 +5476,19 @@ components:
         userId: { type: integer, format: uint64, description: "Person who caused the event, when one did (e.g. a note's author). It is 0 both for an automatic event and for one whose author has since been deleted, so read actor to tell those apart and read this only to name the person." }
         actor: { $ref: "#/components/schemas/IncidentEventActor" }
         memberReading: { $ref: "#/components/schemas/IncidentMemberReading" }
+        detachReason:
+          allOf:
+            - $ref: "#/components/schemas/IncidentAlertDetachReason"
+          description: >-
+            Why the memberships this event ended, ended. Present on a member_detached event
+            alone, and read off the membership links rather than stored on the event, so every
+            such event carries it however long ago it was written.
+
+
+            It separates the two acts that share the member_detached name. A person's detach is
+            a deliberate correction, and automatic grouping never attaches that alert to that
+            incident again. A close frees its whole membership as a consequence of its own
+            transition and blocks nothing, so those alerts can join a later incident.
         skippedAlerts:
           type: integer
           description: >-
