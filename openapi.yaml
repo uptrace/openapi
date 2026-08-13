@@ -6807,8 +6807,9 @@ components:
         trainingPeriod:
           type: number
           description: >-
-            How much history the anomaly and forecast models are fitted on, in
-            milliseconds.
+            (deprecated) How much history the anomaly and forecast models are
+            fitted on, in milliseconds. It is derived from the resolution and
+            the seasonality now; a value sent here is accepted and ignored.
         horizon:
           type: number
           description: >-
