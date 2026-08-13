@@ -2818,7 +2818,7 @@ paths:
                 properties:
                   reopened: { type: integer, format: int64, description: "Number of incidents that were reopened." }
                   skipped: { type: integer, format: int64, description: "Number of incidents skipped (already in the target state or invalid)." }
-                  skippedAlerts: { type: integer, format: int64, description: "How many member alerts did not come back, across the whole batch. A closed incident's reopen restores the roster its close released, apart from any alert another incident has claimed in the meantime, and those stay where they are. It is 0 for a resolved incident, which never released its roster." }
+                  skippedAlerts: { type: integer, format: int64, description: "How many member alerts did not come back, across the whole batch. A closed incident's reopen restores the membership its close released, apart from any alert another incident has claimed in the meantime, and those stay where they are. It is 0 for a resolved incident, which never released its membership." }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -2968,7 +2968,7 @@ paths:
     get:
       summary: List incident alerts
       operationId: ListIncidentAlerts
-      description: The incident's alert roster (active members, or the final historical release for a frozen incident), each with its grouping facts.
+      description: The incident's alert membership (active members, or the final historical release for a frozen incident), each with its grouping facts.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -5387,7 +5387,7 @@ components:
       type: string
       description: >-
         What attached an alert to an incident. Only user and genai are somebody choosing that
-        this alert belongs to this incident. restored is a reopen putting back the roster its
+        this alert belongs to this incident. restored is a reopen putting back the membership its
         close released: it carries the reopener's id, because their press is what put the
         alerts back, but they chose the incident and not its members, so it is not their
         grouping and does not read as one.
@@ -5532,7 +5532,7 @@ components:
 
     AlertSummary:
       type: object
-      description: A reduced alert in an incident's roster, with its grouping facts.
+      description: A reduced alert in an incident's membership, with its grouping facts.
       properties:
         id: { type: integer, format: uint64 }
         projectId: { type: integer, format: uint32 }
@@ -5558,7 +5558,7 @@ components:
             detachReason: { $ref: "#/components/schemas/IncidentAlertDetachReason" }
             decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             movedFromIncidentId: { type: integer, format: uint64 }
-            heldByIncidentId: { type: integer, format: uint64, description: "The incident holding this alert now, served on a released roster alone. A reopen restores what the close freed apart from an alert another incident has since taken, so this is what says which rows will not come back. Absent on a live roster and on a released row nothing has claimed." }
+            claimedByIncidentId: { type: integer, format: uint64, description: "The incident that claims this alert now, served on a released membership alone. A reopen restores what the close freed apart from an alert another incident has since claimed, so this is what says which rows will not come back. Absent on a live membership, where this incident claims every member, and on a released row nothing has claimed." }
             suspected: { type: boolean, description: "This member is marked as one of the incident's causes." }
       required: [id, projectId, name, type]
 
