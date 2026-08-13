@@ -5476,6 +5476,20 @@ components:
         userId: { type: integer, format: uint64, description: "Person who caused the event, when one did (e.g. a note's author). It is 0 both for an automatic event and for one whose author has since been deleted, so read actor to tell those apart and read this only to name the person." }
         actor: { $ref: "#/components/schemas/IncidentEventActor" }
         memberReading: { $ref: "#/components/schemas/IncidentMemberReading" }
+        skippedAlerts:
+          type: integer
+          description: >-
+            How many alerts a reopen could not bring back, because another incident had claimed
+            them after the close released them. Present on a reopened event alone, and absent
+            where a reopen released nothing to restore, brought every alert back, or was written
+            before the count was recorded.
+
+
+            A count and never the ids: the shortfall is a fact about the moment of the reopen,
+            so it must not change when one of those alerts is later deleted. It cannot be
+            derived from the membership afterwards either - the set a reopen tries to restore is
+            narrower than the set its close released, so a later difference would count an alert
+            somebody detached by hand as one that failed to come back.
         note: { type: string, description: "Free-text body of a note event; empty for other event types." }
         status: { $ref: "#/components/schemas/IncidentStatus" }
         priority: { $ref: "#/components/schemas/AlertPriority" }
