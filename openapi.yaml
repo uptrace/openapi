@@ -2616,19 +2616,19 @@ paths:
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
-        - name: status[]
+        - name: status
           in: query
           description: Filter by incident status. Repeat for multiple values.
           schema:
             type: array
             items: { $ref: "#/components/schemas/IncidentStatus" }
-        - name: priority[]
+        - name: priority
           in: query
           description: Filter by priority. Repeat for multiple values.
           schema:
             type: array
             items: { $ref: "#/components/schemas/AlertPriority" }
-        - name: assignee[]
+        - name: assignee
           in: query
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
@@ -2718,19 +2718,19 @@ paths:
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
-        - name: status[]
+        - name: status
           in: query
           description: Filter by incident status. Repeat for multiple values.
           schema:
             type: array
             items: { $ref: "#/components/schemas/IncidentStatus" }
-        - name: priority[]
+        - name: priority
           in: query
           description: Filter by priority. Repeat for multiple values.
           schema:
             type: array
             items: { $ref: "#/components/schemas/AlertPriority" }
-        - name: assignee[]
+        - name: assignee
           in: query
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
