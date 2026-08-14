@@ -5437,22 +5437,16 @@ components:
         and on those four where nothing was read: a person's plain resolve or close states a
         verdict rather than deriving one, and an entry written before the reading was recorded
         carries none.
-
-
         The same reading means different things under different event names, which is why it is
         one field. A closed event reading quiet is an episode that faded past its auto-close
         period. A closed event reading firing is a member that fired again after the reopen
         window, so the episode ended there and that member is free to open a new incident. A
         reopened event reading quiet is a person overruling silence, which is the one condition
         that holds an incident open against the lifecycle sweep.
-
-
         firing is at least one member firing at that moment. quiet is no member firing and none
         archived. inconclusive is no member firing and at least one archived: nobody listens to
         an archived member, so its quiet is no evidence the episode ended, and only the
         transition out of the archive records it.
-
-
         quiet_after_firing is the wider read a held incident's resolve makes: no member firing,
         and a member that fired after the person's reopen and has since recovered. That episode
         is what releases their hold, so only that resolve records this value. A plain
@@ -5509,8 +5503,6 @@ components:
             Why the memberships this event ended, ended. Present on a member_detached event
             alone, and read off the membership links rather than stored on the event, so every
             such event carries it however long ago it was written.
-
-
             It separates the two acts that share the member_detached name. A person's detach is
             a deliberate correction, and automatic grouping never attaches that alert to that
             incident again. A close frees its whole membership as a consequence of its own
@@ -5522,8 +5514,6 @@ components:
             them after the close released them. Present on a reopened event alone, and absent
             where a reopen released nothing to restore, brought every alert back, or was written
             before the count was recorded.
-
-
             A count and never the ids: the shortfall is a fact about the moment of the reopen,
             so it must not change when one of those alerts is later deleted. It cannot be
             derived from the membership afterwards either - the set a reopen tries to restore is
