@@ -2643,6 +2643,27 @@ paths:
           in: query
           description: Free-text search across incident title.
           schema: { type: string }
+        - name: sort_by
+          in: query
+          required: false
+          description: >-
+            The column to order by. An absent or unlisted value orders by updated_at
+            descending, the most recently touched incident first. priority orders by severity
+            rather than by the stored text, so high comes before info. Every order is
+            tie-broken by incident id.
+          schema:
+            type: string
+            enum: [priority, status, title, created_at, updated_at]
+        - name: sort_dir
+          in: query
+          required: false
+          description: >-
+            The direction to order in, defaulting to desc. Case does not matter, and a value
+            that is neither is rejected: an unusable direction fails, where an unusable
+            sort_by falls back.
+          schema:
+            type: string
+            enum: [asc, desc]
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Page"
       responses:
@@ -2706,6 +2727,41 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "500": { $ref: "#/components/responses/InternalError" }
+    delete:
+      summary: Delete incidents
+      operationId: DeleteIncidents
+      description: >-
+        Remove every incident named in the request body, with its events and its membership.
+        This is the one incident write that keeps no history: a close ends an incident and
+        leaves it readable, while a delete leaves nothing behind and cannot be undone. The
+        member alerts themselves are not touched, and each is free to be grouped again.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids: { type: array, items: { type: integer, format: uint64 } }
+      responses:
+        "200":
+          description: Deleted incidents.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted, skipped]
+                properties:
+                  deleted: { type: integer, format: int64, description: "Number of incidents that were deleted." }
+                  skipped: { type: integer, format: int64, description: "Number of incidents skipped (a missing or cross-project id)." }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
 
   /internal/v1/incidents/{project_id}/counts:
     get:
@@ -2752,6 +2808,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CountsResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /internal/v1/incidents/{project_id}/recommendations:
+    get:
+      summary: List project recommendations
+      operationId: ListProjectRecommendations
+      description: >-
+        Page the project's recommendations across every incident, newest first. This is the
+        queue a person works through, where the per-incident list is one incident's tab: use
+        it to see what is waiting without opening each incident. Filter by status to separate
+        the pending proposals from the decided ones. Each row names the incident it belongs
+        to, resolved through incidentsById.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Page"
+        - name: status
+          in: query
+          required: false
+          description: >-
+            Keep only recommendations in these states. Repeatable, and an absent parameter
+            asks for every state.
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/RecommendationStatus" }
+      responses:
+        "200":
+          description: The project's recommendations.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recommendations, count, counts]
+                properties:
+                  recommendations:
+                    type: array
+                    items: { $ref: "#/components/schemas/RecommendationSummary" }
+                  count:
+                    type: integer
+                    description: How many recommendations the request's own scope holds, which is what a pager reads.
+                  counts:
+                    $ref: "#/components/schemas/RecommendationStatusCounts"
+                  incidentsById:
+                    type: object
+                    description: "Every incident the listed recommendations belong to, keyed by incident id."
+                    additionalProperties: { $ref: "#/components/schemas/IncidentSummary" }
+                  usersById:
+                    type: object
+                    description: "Every user who decided one of the listed recommendations, keyed by user id."
+                    additionalProperties: { $ref: "#/components/schemas/PublicUser" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3113,6 +3223,53 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalError" }
 
+  /internal/v1/incidents/{project_id}/{incident_id}/alerts/{alert_id}/suspected:
+    put:
+      summary: Mark a member as a suspected cause
+      operationId: MarkIncidentMemberSuspected
+      description: >-
+        Mark one of the incident's member alerts as a suspected cause of it, or take the mark
+        back. The mark is a person's reading of the membership, so it changes neither the
+        incident's status nor its priority, and an analysis writes it only on the incident's
+        first pass. The alert must be a current member. A merged incident takes no mark.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/IncidentId"
+        - name: alert_id
+          in: path
+          required: true
+          description: The member alert to mark.
+          schema:
+            type: integer
+            format: uint64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [suspected]
+              properties:
+                suspected:
+                  type: boolean
+                  description: True to mark the member, false to take the mark back.
+      responses:
+        "200":
+          description: The updated incident.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [incident]
+                properties:
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
   /internal/v1/incidents/{project_id}/{incident_id}/priority:
     put:
       summary: Update incident priority
@@ -3454,6 +3611,15 @@ paths:
         - $ref: "#/components/parameters/IncidentId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Page"
+        - name: status
+          in: query
+          required: false
+          description: >-
+            Keep only recommendations in these states. Repeatable, and an absent parameter
+            asks for every state.
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/RecommendationStatus" }
       responses:
         "200":
           description: The incident's recommendations.
@@ -5602,6 +5768,35 @@ components:
         resolveRecommended: { type: boolean }
         resolveReason: { type: string }
 
+    RecommendationStatus:
+      type: string
+      description: >-
+        A recommendation's decision state. pending is waiting for a person. accepted and
+        rejected are that person's answer. superseded is the state a proposal reaches without
+        anybody answering it: a fresh analysis, or a transition that ends or reopens the
+        incident, retires whatever was still pending, so a badge never outlives the status it
+        was derived under.
+      # A schema of its own rather than an enum inline on RecommendationSummary.status: the
+      # two recommendation lists filter on it, so it has three readers. Being a named schema
+      # is also what keeps the generated constants clear of the bare Accepted (InviteStatus)
+      # and Pending (TemplateStatus) elsewhere in the client -- the generator prefixes them
+      # with the schema name, so no x-enum-names is needed to separate them.
+      enum: [pending, accepted, rejected, superseded]
+
+    RecommendationStatusCounts:
+      type: object
+      description: >-
+        How many recommendations a project holds in each state, over the whole project rather
+        than the request's own page or status filter, so a tab keeps its total while another
+        tab is selected.
+      properties:
+        all: { type: integer }
+        pending: { type: integer }
+        accepted: { type: integer }
+        rejected: { type: integer }
+        superseded: { type: integer }
+      required: [all, pending, accepted, rejected, superseded]
+
     RecommendationSummary:
       type: object
       description: A reduced server-derived, human-gated proposal to act on an incident.
@@ -5615,17 +5810,7 @@ components:
         proposedPriority: { $ref: "#/components/schemas/AlertPriority" }
         proposedAlertId: { type: integer, format: uint64 }
         reason: { type: string }
-        status:
-          type: string
-          description: The recommendation's decision state.
-          # Prefix the generated constants so they do not collide with the bare Accepted
-          # (InviteStatus) and Pending (TemplateStatus) enum values elsewhere in the client.
-          x-enum-names:
-            - RecommendationSummaryStatusPending
-            - RecommendationSummaryStatusAccepted
-            - RecommendationSummaryStatusRejected
-            - RecommendationSummaryStatusSuperseded
-          enum: [pending, accepted, rejected, superseded]
+        status: { $ref: "#/components/schemas/RecommendationStatus" }
         decidedBy: { type: integer, format: uint64 }
         decidedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
         createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
