@@ -2616,19 +2616,19 @@ paths:
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
-        - name: status[]
+        - name: status
           in: query
           description: Filter by incident status. Repeat for multiple values.
           schema:
             type: array
             items: { $ref: "#/components/schemas/IncidentStatus" }
-        - name: priority[]
+        - name: priority
           in: query
           description: Filter by priority. Repeat for multiple values.
           schema:
             type: array
             items: { $ref: "#/components/schemas/AlertPriority" }
-        - name: assignee[]
+        - name: assignee
           in: query
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
@@ -2643,6 +2643,27 @@ paths:
           in: query
           description: Free-text search across incident title.
           schema: { type: string }
+        - name: sort_by
+          in: query
+          required: false
+          description: >-
+            The column to order by. An absent or unlisted value orders by updated_at
+            descending, the most recently touched incident first. priority orders by severity
+            rather than by the stored text, so high comes before info. Every order is
+            tie-broken by incident id.
+          schema:
+            type: string
+            enum: [priority, status, title, created_at, updated_at]
+        - name: sort_dir
+          in: query
+          required: false
+          description: >-
+            The direction to order in, defaulting to desc. Case does not matter, and a value
+            that is neither is rejected: an unusable direction fails, where an unusable
+            sort_by falls back.
+          schema:
+            type: string
+            enum: [asc, desc]
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Page"
       responses:
@@ -2706,6 +2727,41 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "500": { $ref: "#/components/responses/InternalError" }
+    delete:
+      summary: Delete incidents
+      operationId: DeleteIncidents
+      description: >-
+        Remove every incident named in the request body, with its events and its membership.
+        This is the one incident write that keeps no history: a close ends an incident and
+        leaves it readable, while a delete leaves nothing behind and cannot be undone. The
+        member alerts themselves are not touched, and each is free to be grouped again.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids: { type: array, items: { type: integer, format: uint64 } }
+      responses:
+        "200":
+          description: Deleted incidents.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted, skipped]
+                properties:
+                  deleted: { type: integer, format: int64, description: "Number of incidents that were deleted." }
+                  skipped: { type: integer, format: int64, description: "Number of incidents skipped (a missing or cross-project id)." }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
 
   /internal/v1/incidents/{project_id}/counts:
     get:
@@ -2718,19 +2774,19 @@ paths:
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
-        - name: status[]
+        - name: status
           in: query
           description: Filter by incident status. Repeat for multiple values.
           schema:
             type: array
             items: { $ref: "#/components/schemas/IncidentStatus" }
-        - name: priority[]
+        - name: priority
           in: query
           description: Filter by priority. Repeat for multiple values.
           schema:
             type: array
             items: { $ref: "#/components/schemas/AlertPriority" }
-        - name: assignee[]
+        - name: assignee
           in: query
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, or
@@ -2752,6 +2808,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CountsResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /internal/v1/incidents/{project_id}/recommendations:
+    get:
+      summary: List project recommendations
+      operationId: ListProjectRecommendations
+      description: >-
+        Page the project's recommendations across every incident, newest first. This is the
+        queue a person works through, where the per-incident list is one incident's tab: use
+        it to see what is waiting without opening each incident. Filter by status to separate
+        the pending proposals from the decided ones. Each row names the incident it belongs
+        to, resolved through incidentsById.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Page"
+        - name: status
+          in: query
+          required: false
+          description: >-
+            Keep only recommendations in these states. Repeatable, and an absent parameter
+            asks for every state.
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/RecommendationStatus" }
+      responses:
+        "200":
+          description: The project's recommendations.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recommendations, count, counts]
+                properties:
+                  recommendations:
+                    type: array
+                    items: { $ref: "#/components/schemas/RecommendationSummary" }
+                  count:
+                    type: integer
+                    description: How many recommendations the request's own scope holds, which is what a pager reads.
+                  counts:
+                    $ref: "#/components/schemas/RecommendationStatusCounts"
+                  incidentsById:
+                    type: object
+                    description: "Every incident the listed recommendations belong to, keyed by incident id."
+                    additionalProperties: { $ref: "#/components/schemas/IncidentSummary" }
+                  usersById:
+                    type: object
+                    description: "Every user who decided one of the listed recommendations, keyed by user id."
+                    additionalProperties: { $ref: "#/components/schemas/PublicUser" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -2818,7 +2928,7 @@ paths:
                 properties:
                   reopened: { type: integer, format: int64, description: "Number of incidents that were reopened." }
                   skipped: { type: integer, format: int64, description: "Number of incidents skipped (already in the target state or invalid)." }
-                  skippedAlerts: { type: integer, format: int64, description: "How many member alerts did not come back, across the whole batch. A closed incident's reopen restores the roster its close released, apart from any alert another incident has claimed in the meantime, and those stay where they are. It is 0 for a resolved incident, which never released its roster." }
+                  skippedAlerts: { type: integer, format: int64, description: "How many member alerts did not come back, across the whole batch. A closed incident's reopen restores the membership its close released, apart from any alert another incident has claimed in the meantime, and those stay where they are. It is 0 for a resolved incident, which never released its membership." }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -2968,7 +3078,7 @@ paths:
     get:
       summary: List incident alerts
       operationId: ListIncidentAlerts
-      description: The incident's alert roster (active members, or the final historical release for a frozen incident), each with its grouping facts.
+      description: The incident's alert membership (active members, or the final historical release for a frozen incident), each with its grouping facts.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2998,13 +3108,26 @@ paths:
     get:
       summary: List incident events
       operationId: ListIncidentEvents
-      description: The incident's activity feed, oldest first.
+      description: >-
+        The incident's activity feed, newest first. The page is capped, so it keeps the newest
+        entries and drops the oldest: a feed read to decide what to do now needs the recent
+        end. Walk older entries with page.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
         - $ref: "#/components/parameters/IncidentId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Page"
+        - name: name
+          in: query
+          required: false
+          description: >-
+            Keep only these event kinds. Repeatable, and an absent parameter asks for every
+            kind. It narrows the whole log rather than the page, so count follows it while
+            countsByName does not.
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/EventName" }
       responses:
         "200":
           description: The incident's events.
@@ -3017,7 +3140,20 @@ paths:
                   events:
                     type: array
                     items: { $ref: "#/components/schemas/EventSummary" }
-                  count: { type: integer }
+                  count:
+                    type: integer
+                    description: >-
+                      How many events the request's own scope holds, which is what a pager
+                      reads. It follows the name filter.
+                  countsByName:
+                    type: object
+                    additionalProperties: { type: integer }
+                    description: >-
+                      How many events of each kind the incident's whole log holds, keyed by
+                      event name. It follows neither the page nor the name filter, so a kind
+                      chip can say how many entries of its kind exist while it is unselected
+                      and while the reader is on a later page. A kind with no entry is absent
+                      rather than zero.
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3071,6 +3207,53 @@ paths:
               properties:
                 title: { type: string }
                 summary: { type: string }
+      responses:
+        "200":
+          description: The updated incident.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [incident]
+                properties:
+                  incident: { $ref: "#/components/schemas/IncidentSummary" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /internal/v1/incidents/{project_id}/{incident_id}/alerts/{alert_id}/suspected:
+    put:
+      summary: Mark a member as a suspected cause
+      operationId: MarkIncidentMemberSuspected
+      description: >-
+        Mark one of the incident's member alerts as a suspected cause of it, or take the mark
+        back. The mark is a person's reading of the membership, so it changes neither the
+        incident's status nor its priority, and an analysis writes it only on the incident's
+        first pass. The alert must be a current member. A merged incident takes no mark.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/IncidentId"
+        - name: alert_id
+          in: path
+          required: true
+          description: The member alert to mark.
+          schema:
+            type: integer
+            format: uint64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [suspected]
+              properties:
+                suspected:
+                  type: boolean
+                  description: True to mark the member, false to take the mark back.
       responses:
         "200":
           description: The updated incident.
@@ -3428,6 +3611,15 @@ paths:
         - $ref: "#/components/parameters/IncidentId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Page"
+        - name: status
+          in: query
+          required: false
+          description: >-
+            Keep only recommendations in these states. Repeatable, and an absent parameter
+            asks for every state.
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/RecommendationStatus" }
       responses:
         "200":
           description: The incident's recommendations.
@@ -5387,7 +5579,7 @@ components:
       type: string
       description: >-
         What attached an alert to an incident. Only user and genai are somebody choosing that
-        this alert belongs to this incident. restored is a reopen putting back the roster its
+        this alert belongs to this incident. restored is a reopen putting back the membership its
         close released: it carries the reopener's id, because their press is what put the
         alerts back, but they chose the incident and not its members, so it is not their
         grouping and does not read as one.
@@ -5402,6 +5594,30 @@ components:
         MCP tool alike; system is the product acting on its own, which is the lifecycle
         sweep, the automatic grouper, and every other entry nobody pressed.
       enum: [person, system]
+
+    IncidentMemberReading:
+      type: string
+      description: >-
+        What an incident's membership read when a transition was decided. It is the evidence
+        behind resolved, closed, reopened and unarchived, and it is absent on every other event
+        and on those four where nothing was read: a person's plain resolve or close states a
+        verdict rather than deriving one, and an entry written before the reading was recorded
+        carries none.
+        The same reading means different things under different event names, which is why it is
+        one field. A closed event reading quiet is an episode that faded past its auto-close
+        period. A closed event reading firing is a member that fired again after the reopen
+        window, so the episode ended there and that member is free to open a new incident. A
+        reopened event reading quiet is a person overruling silence, which is the one condition
+        that holds an incident open against the lifecycle sweep.
+        firing is at least one member firing at that moment. quiet is no member firing and none
+        archived. inconclusive is no member firing and at least one archived: nobody listens to
+        an archived member, so its quiet is no evidence the episode ended, and only the
+        transition out of the archive records it.
+        quiet_after_firing is the wider read a held incident's resolve makes: no member firing,
+        and a member that fired after the person's reopen and has since recovered. That episode
+        is what releases their hold, so only that resolve records this value. A plain
+        auto-resolve asks only what is firing now and records quiet.
+      enum: [firing, quiet, quiet_after_firing, inconclusive]
 
     IncidentAlertDetachReason:
       type: string
@@ -5429,12 +5645,12 @@ components:
       type: string
       description: >-
         What drove an incident event. A note event carries a user's free-text note; the
-        other values are lifecycle, triage, and membership changes. Nothing produces
-        'acknowledged' any more, and it stays for the episodes worked before the archive
-        axis replaced acknowledgement.
+        other values are lifecycle, triage, and membership changes. This is the whole
+        vocabulary an entry can carry, so it is also what the event feed's name filter
+        accepts.
       enum:
         [created, resolved, reopened, merged, closed, priority_changed,
-         assignee_changed, acknowledged, archived, unarchived, note,
+         assignee_changed, archived, unarchived, note,
          member_attached, member_detached]
 
     EventSummary:
@@ -5445,6 +5661,30 @@ components:
         name: { $ref: "#/components/schemas/EventName" }
         userId: { type: integer, format: uint64, description: "Person who caused the event, when one did (e.g. a note's author). It is 0 both for an automatic event and for one whose author has since been deleted, so read actor to tell those apart and read this only to name the person." }
         actor: { $ref: "#/components/schemas/IncidentEventActor" }
+        memberReading: { $ref: "#/components/schemas/IncidentMemberReading" }
+        detachReason:
+          allOf:
+            - $ref: "#/components/schemas/IncidentAlertDetachReason"
+          description: >-
+            Why the memberships this event ended, ended. Present on a member_detached event
+            alone, and read off the membership links rather than stored on the event, so every
+            such event carries it however long ago it was written.
+            It separates the two acts that share the member_detached name. A person's detach is
+            a deliberate correction, and automatic grouping never attaches that alert to that
+            incident again. A close frees its whole membership as a consequence of its own
+            transition and blocks nothing, so those alerts can join a later incident.
+        skippedAlerts:
+          type: integer
+          description: >-
+            How many alerts a reopen could not bring back, because another incident had claimed
+            them after the close released them. Present on a reopened event alone, and absent
+            where a reopen released nothing to restore, brought every alert back, or was written
+            before the count was recorded.
+            A count and never the ids: the shortfall is a fact about the moment of the reopen,
+            so it must not change when one of those alerts is later deleted. It cannot be
+            derived from the membership afterwards either - the set a reopen tries to restore is
+            narrower than the set its close released, so a later difference would count an alert
+            somebody detached by hand as one that failed to come back.
         note: { type: string, description: "Free-text body of a note event; empty for other event types." }
         status: { $ref: "#/components/schemas/IncidentStatus" }
         priority: { $ref: "#/components/schemas/AlertPriority" }
@@ -5474,7 +5714,7 @@ components:
 
     AlertSummary:
       type: object
-      description: A reduced alert in an incident's roster, with its grouping facts.
+      description: A reduced alert in an incident's membership, with its grouping facts.
       properties:
         id: { type: integer, format: uint64 }
         projectId: { type: integer, format: uint32 }
@@ -5500,7 +5740,7 @@ components:
             detachReason: { $ref: "#/components/schemas/IncidentAlertDetachReason" }
             decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             movedFromIncidentId: { type: integer, format: uint64 }
-            heldByIncidentId: { type: integer, format: uint64, description: "The incident holding this alert now, served on a released roster alone. A reopen restores what the close freed apart from an alert another incident has since taken, so this is what says which rows will not come back. Absent on a live roster and on a released row nothing has claimed." }
+            claimedByIncidentId: { type: integer, format: uint64, description: "The incident that claims this alert now, served on a released membership alone. A reopen restores what the close freed apart from an alert another incident has since claimed, so this is what says which rows will not come back. Absent on a live membership, where this incident claims every member, and on a released row nothing has claimed." }
             suspected: { type: boolean, description: "This member is marked as one of the incident's causes." }
       required: [id, projectId, name, type]
 
@@ -5528,6 +5768,35 @@ components:
         resolveRecommended: { type: boolean }
         resolveReason: { type: string }
 
+    RecommendationStatus:
+      type: string
+      description: >-
+        A recommendation's decision state. pending is waiting for a person. accepted and
+        rejected are that person's answer. superseded is the state a proposal reaches without
+        anybody answering it: a fresh analysis, or a transition that ends or reopens the
+        incident, retires whatever was still pending, so a badge never outlives the status it
+        was derived under.
+      # A schema of its own rather than an enum inline on RecommendationSummary.status: the
+      # two recommendation lists filter on it, so it has three readers. Being a named schema
+      # is also what keeps the generated constants clear of the bare Accepted (InviteStatus)
+      # and Pending (TemplateStatus) elsewhere in the client -- the generator prefixes them
+      # with the schema name, so no x-enum-names is needed to separate them.
+      enum: [pending, accepted, rejected, superseded]
+
+    RecommendationStatusCounts:
+      type: object
+      description: >-
+        How many recommendations a project holds in each state, over the whole project rather
+        than the request's own page or status filter, so a tab keeps its total while another
+        tab is selected.
+      properties:
+        all: { type: integer }
+        pending: { type: integer }
+        accepted: { type: integer }
+        rejected: { type: integer }
+        superseded: { type: integer }
+      required: [all, pending, accepted, rejected, superseded]
+
     RecommendationSummary:
       type: object
       description: A reduced server-derived, human-gated proposal to act on an incident.
@@ -5541,17 +5810,7 @@ components:
         proposedPriority: { $ref: "#/components/schemas/AlertPriority" }
         proposedAlertId: { type: integer, format: uint64 }
         reason: { type: string }
-        status:
-          type: string
-          description: The recommendation's decision state.
-          # Prefix the generated constants so they do not collide with the bare Accepted
-          # (InviteStatus) and Pending (TemplateStatus) enum values elsewhere in the client.
-          x-enum-names:
-            - RecommendationSummaryStatusPending
-            - RecommendationSummaryStatusAccepted
-            - RecommendationSummaryStatusRejected
-            - RecommendationSummaryStatusSuperseded
-          enum: [pending, accepted, rejected, superseded]
+        status: { $ref: "#/components/schemas/RecommendationStatus" }
         decidedBy: { type: integer, format: uint64 }
         decidedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
         createdAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
