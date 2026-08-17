@@ -2355,6 +2355,12 @@ paths:
       description: >-
         List alerts with optional filtering by status, priority, type, activity state,
         monitor ID, and free-text search. Returns alerts sorted by most recent event by default.
+
+
+        The filter parameter narrows the same list with a tree of conditions. It names
+        alert.status, alert.priority, alert.type, alert.activity_state, alert.monitor_id
+        and alert.assigned_user. Every other key is read as one of the alert's own
+        attributes, so an attribute the project reports can be filtered by its name.
       tags: [Alerts]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2399,6 +2405,7 @@ paths:
             items:
               type: integer
               format: uint64
+        - $ref: "#/components/parameters/ListFilter"
         - name: sort_by
           in: query
           description: Field to sort by. Defaults to event.created_at.
@@ -2613,6 +2620,14 @@ paths:
         List incidents, filterable by status, priority, assignee, and free-text search. A
         request that names no status lists every status, archived included; name a status
         to work one of them.
+
+
+        The filter parameter narrows the same list with a tree of conditions. It names
+        incident.status, incident.priority and incident.assigned_user, and it answers any
+        other key with a condition no incident satisfies: an incident carries no
+        attributes of its own. The priority and assignee parameters name two of those
+        dimensions as well, so a request that sends both asks for the rows that satisfy
+        all of it.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2631,14 +2646,15 @@ paths:
         - name: assignee
           in: query
           description: >-
-            Filter by owner. Repeat for multiple values. Each value is a user id, or
-            'none' for incidents nobody owns; the values are alternatives, so asking for
-            'none' and a user id returns both. It holds back no status of its own: a merged
-            tombstone keeps the owners it had and is returned for them, and narrowing that
-            is what the status filter is for.
+            Filter by owner. Repeat for multiple values. Each value is a user id, and the
+            values are alternatives, so asking for two returns the incidents either of them
+            owns. A value that is not a user id names nobody and selects nothing. It holds
+            back no status of its own: a merged tombstone keeps the owners it had and is
+            returned for them, and narrowing that is what the status filter is for.
           schema:
             type: array
             items: { type: string }
+        - $ref: "#/components/parameters/ListFilter"
         - name: search
           in: query
           description: Free-text search across incident title.
@@ -2679,6 +2695,37 @@ paths:
                     type: array
                     items: { $ref: "#/components/schemas/IncidentSummary" }
                   count: { type: integer, format: int64, description: "Total number of matching incidents." }
+                  noData:
+                    type: boolean
+                    description: >-
+                      True when the project holds no incident at all, as opposed to none
+                      matching the filter. It lets a client tell an empty project from an
+                      empty result.
+                  usersById:
+                    type: object
+                    description: >-
+                      Every user the listed incidents refer to, keyed by user ID. The rows
+                      carry owner IDs alone, so this is what names them.
+                    additionalProperties: { $ref: "#/components/schemas/PublicUser" }
+                  alertCountsById:
+                    type: object
+                    description: >-
+                      How many alerts each listed incident holds, keyed by incident ID. A
+                      live incident is counted over its active membership, and a closed or
+                      merged one over its final release batch, so the tally matches the
+                      membership its own alerts page serves. An incident that holds none is
+                      absent, so a missing key reads as a zero pair.
+                    additionalProperties: { $ref: "#/components/schemas/IncidentMemberCounts" }
+                  pendingRecommendationCountsById:
+                    type: object
+                    description: >-
+                      How many recommendations each listed incident holds awaiting a
+                      decision, keyed by incident ID. Only pending proposals count: a
+                      decided one is history, so it marks no work that is left. An incident
+                      with none pending is absent, so a missing key reads as zero. Use it to
+                      find the incidents waiting on a decision without reading each one's
+                      recommendations.
+                    additionalProperties: { type: integer }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -2768,9 +2815,16 @@ paths:
       summary: Incident counts
       operationId: IncidentCounts
       description: >-
-        Returns per-status and per-priority tallies for the project's incidents. archived
-        carries its own tally like the other four statuses, and the all count is the union
-        of the five - the same population a listing that names no status returns.
+        Returns per-status, per-priority and per-owner tallies for the project's incidents,
+        each badging one control of the same list. archived carries its own tally like the
+        other four statuses, and the all count is the union of the five - the same
+        population a listing that names no status returns.
+
+
+        Every tally drops its own axis before it counts, so a value badges what selecting
+        it would return rather than what the current selection holds. The filter parameter
+        narrows the tallies the way it narrows the listing, and names the same dimensions;
+        a condition over the axis a tally counts is dropped with that axis.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -2789,14 +2843,15 @@ paths:
         - name: assignee
           in: query
           description: >-
-            Filter by owner. Repeat for multiple values. Each value is a user id, or
-            'none' for incidents nobody owns; the values are alternatives, so asking for
-            'none' and a user id returns both. It holds back no status of its own: a merged
-            tombstone keeps the owners it had and is returned for them, and narrowing that
-            is what the status filter is for.
+            Filter by owner. Repeat for multiple values. Each value is a user id, and the
+            values are alternatives, so asking for two returns the incidents either of them
+            owns. A value that is not a user id names nobody and selects nothing. It holds
+            back no status of its own: a merged tombstone keeps the owners it had and is
+            returned for them, and narrowing that is what the status filter is for.
           schema:
             type: array
             items: { type: string }
+        - $ref: "#/components/parameters/ListFilter"
         - name: search
           in: query
           description: Free-text search across incident title.
@@ -2808,60 +2863,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CountsResult"
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "500": { $ref: "#/components/responses/InternalError" }
-
-  /internal/v1/incidents/{project_id}/recommendations:
-    get:
-      summary: List project recommendations
-      operationId: ListProjectRecommendations
-      description: >-
-        Page the project's recommendations across every incident, newest first. This is the
-        queue a person works through, where the per-incident list is one incident's tab: use
-        it to see what is waiting without opening each incident. Filter by status to separate
-        the pending proposals from the decided ones. Each row names the incident it belongs
-        to, resolved through incidentsById.
-      tags: [Incidents]
-      parameters:
-        - $ref: "#/components/parameters/ProjectId"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Page"
-        - name: status
-          in: query
-          required: false
-          description: >-
-            Keep only recommendations in these states. Repeatable, and an absent parameter
-            asks for every state.
-          schema:
-            type: array
-            items: { $ref: "#/components/schemas/RecommendationStatus" }
-      responses:
-        "200":
-          description: The project's recommendations.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [recommendations, count, counts]
-                properties:
-                  recommendations:
-                    type: array
-                    items: { $ref: "#/components/schemas/RecommendationSummary" }
-                  count:
-                    type: integer
-                    description: How many recommendations the request's own scope holds, which is what a pager reads.
-                  counts:
-                    $ref: "#/components/schemas/RecommendationStatusCounts"
-                  incidentsById:
-                    type: object
-                    description: "Every incident the listed recommendations belong to, keyed by incident id."
-                    additionalProperties: { $ref: "#/components/schemas/IncidentSummary" }
-                  usersById:
-                    type: object
-                    description: "Every user who decided one of the listed recommendations, keyed by user id."
-                    additionalProperties: { $ref: "#/components/schemas/PublicUser" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3604,7 +3605,10 @@ paths:
     get:
       summary: List incident recommendations
       operationId: ListIncidentRecommendations
-      description: Page the incident's recommendations, newest first, all statuses.
+      description: >-
+        Page the incident's recommendations, every status, pending first and newest first
+        inside each half. Pending leads so that a page holds what still owes a decision
+        before the history it accumulated.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -3627,12 +3631,20 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [recommendations, count]
+                required: [recommendations, count, pendingCount]
                 properties:
                   recommendations:
                     type: array
                     items: { $ref: "#/components/schemas/RecommendationSummary" }
-                  count: { type: integer }
+                  count:
+                    type: integer
+                    description: How many recommendations the status filter matched, across every page.
+                  pendingCount:
+                    type: integer
+                    description: >-
+                      How many of the incident's recommendations still wait for a decision.
+                      This counts the incident, not the page and not the status filter, so a
+                      caller reading the decided history still learns what is outstanding.
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -5118,6 +5130,27 @@ components:
         type: integer
         format: int32
       example: 1
+    ListFilter:
+      name: filter
+      in: query
+      required: false
+      description: >-
+        A tree of conditions, as JSON, that a row must satisfy. A condition holds its key
+        in k, its operator in o, and its values in v. A group holds its combinator (and,
+        or) in c and its children in n, and a child is a condition or another group. The
+        root is a group, and a bare condition is read as a group of one. A tree must not
+        nest more than 5 groups deep. The operators are =, !=, exists and not exists. A
+        comparison that holds several values is satisfied by any one of them. The presence
+        pair takes no values and asks whether the dimension is set on the row at all. It
+        is how a caller asks for the rows nobody owns: ownership is an assignment row, so
+        an unowned row is an absence and not a value of the dimension. A dimension that
+        every row carries, such as a status, refuses the pair. Each operation says which
+        keys it names, and folds its own repeated facet parameters into this tree with
+        and, so one request can send both. A filter this build cannot read, or one that
+        asks what it cannot answer, is refused with 400.
+      schema:
+        type: string
+      example: '{"c":"and","n":[{"k":"incident.priority","o":"=","v":["high","medium"]}]}'
     DashboardId:
       name: dashboard_id
       in: path
@@ -5628,19 +5661,6 @@ components:
         members as a consequence of the incident's own transition and block nothing.
       enum: [user, closed, merged]
 
-    IncidentGroupingDecision:
-      type: object
-      description: The automatic grouper's decision that attached an alert, kept so the grouping can be reviewed later.
-      properties:
-        action: { type: string, enum: [attach, create] }
-        alertIds: { type: array, items: { type: integer, format: uint64 } }
-        incidentId: { type: integer, format: uint64 }
-        title: { type: string }
-        confidence: { type: number, format: double }
-        reason: { type: string }
-        signal: { type: string, enum: [same_resource, same_service, shared_scope] }
-        evidenceAlertIds: { type: array, items: { type: integer, format: uint64 } }
-
     EventName:
       type: string
       description: >-
@@ -5738,7 +5758,6 @@ components:
             attachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             detachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             detachReason: { $ref: "#/components/schemas/IncidentAlertDetachReason" }
-            decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             movedFromIncidentId: { type: integer, format: uint64 }
             claimedByIncidentId: { type: integer, format: uint64, description: "The incident that claims this alert now, served on a released membership alone. A reopen restores what the close freed apart from an alert another incident has since claimed, so this is what says which rows will not come back. Absent on a live membership, where this incident claims every member, and on a released row nothing has claimed." }
             suspected: { type: boolean, description: "This member is marked as one of the incident's causes." }
@@ -5782,20 +5801,6 @@ components:
       # and Pending (TemplateStatus) elsewhere in the client -- the generator prefixes them
       # with the schema name, so no x-enum-names is needed to separate them.
       enum: [pending, accepted, rejected, superseded]
-
-    RecommendationStatusCounts:
-      type: object
-      description: >-
-        How many recommendations a project holds in each state, over the whole project rather
-        than the request's own page or status filter, so a tab keeps its total while another
-        tab is selected.
-      properties:
-        all: { type: integer }
-        pending: { type: integer }
-        accepted: { type: integer }
-        rejected: { type: integer }
-        superseded: { type: integer }
-      required: [all, pending, accepted, rejected, superseded]
 
     RecommendationSummary:
       type: object
@@ -5845,9 +5850,17 @@ components:
         updatedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
       required: [id, projectId, title, status, priority]
 
+    IncidentMemberCounts:
+      type: object
+      description: How many alerts an incident holds, and how many of those are unresolved.
+      properties:
+        total: { type: integer }
+        unresolved: { type: integer }
+      required: [total, unresolved]
+
     CountsResult:
       type: object
-      description: Per-status and per-priority incident tallies.
+      description: Per-status, per-priority and per-owner incident tallies.
       properties:
         counts:
           type: object
@@ -5880,9 +5893,6 @@ components:
               type: object
               description: How many incidents each owner holds, keyed by user ID.
               additionalProperties: { type: integer }
-            unassigned:
-              type: integer
-              description: How many incidents nobody owns.
       required: [counts, priorityCounts]
 
     User:
