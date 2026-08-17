@@ -5628,19 +5628,6 @@ components:
         members as a consequence of the incident's own transition and block nothing.
       enum: [user, closed, merged]
 
-    IncidentGroupingDecision:
-      type: object
-      description: The automatic grouper's decision that attached an alert, kept so the grouping can be reviewed later.
-      properties:
-        action: { type: string, enum: [attach, create] }
-        alertIds: { type: array, items: { type: integer, format: uint64 } }
-        incidentId: { type: integer, format: uint64 }
-        title: { type: string }
-        confidence: { type: number, format: double }
-        reason: { type: string }
-        signal: { type: string, enum: [same_resource, same_service, shared_scope] }
-        evidenceAlertIds: { type: array, items: { type: integer, format: uint64 } }
-
     EventName:
       type: string
       description: >-
@@ -5738,7 +5725,6 @@ components:
             attachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             detachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             detachReason: { $ref: "#/components/schemas/IncidentAlertDetachReason" }
-            decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             movedFromIncidentId: { type: integer, format: uint64 }
             claimedByIncidentId: { type: integer, format: uint64, description: "The incident that claims this alert now, served on a released membership alone. A reopen restores what the close freed apart from an alert another incident has since claimed, so this is what says which rows will not come back. Absent on a live membership, where this incident claims every member, and on a released row nothing has claimed." }
             suspected: { type: boolean, description: "This member is marked as one of the incident's causes." }
@@ -5880,9 +5866,6 @@ components:
               type: object
               description: How many incidents each owner holds, keyed by user ID.
               additionalProperties: { type: integer }
-            unassigned:
-              type: integer
-              description: How many incidents nobody owns.
       required: [counts, priorityCounts]
 
     User:
