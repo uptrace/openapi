@@ -3605,7 +3605,10 @@ paths:
     get:
       summary: List incident recommendations
       operationId: ListIncidentRecommendations
-      description: Page the incident's recommendations, newest first, all statuses.
+      description: >-
+        Page the incident's recommendations, every status, pending first and newest first
+        inside each half. Pending leads so that a page holds what still owes a decision
+        before the history it accumulated.
       tags: [Incidents]
       parameters:
         - $ref: "#/components/parameters/ProjectId"
@@ -3628,12 +3631,20 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [recommendations, count]
+                required: [recommendations, count, pendingCount]
                 properties:
                   recommendations:
                     type: array
                     items: { $ref: "#/components/schemas/RecommendationSummary" }
-                  count: { type: integer }
+                  count:
+                    type: integer
+                    description: How many recommendations the status filter matched, across every page.
+                  pendingCount:
+                    type: integer
+                    description: >-
+                      How many of the incident's recommendations still wait for a decision.
+                      This counts the incident, not the page and not the status filter, so a
+                      caller reading the decided history still learns what is outstanding.
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
