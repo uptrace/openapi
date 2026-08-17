@@ -2906,7 +2906,10 @@ paths:
                     items: { $ref: "#/components/schemas/RecommendationSummary" }
                   count:
                     type: integer
-                    description: How many recommendations the request's own scope holds, which is what a pager reads.
+                    description: >-
+                      How many recommendations the request's own scope holds, which is what a
+                      pager reads. It respects the status filter, so asking for pending is how
+                      a caller learns how many the project owes a decision on.
                   incidentsById:
                     type: object
                     description: >-
