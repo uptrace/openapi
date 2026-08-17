@@ -6817,11 +6817,23 @@ components:
             Whether the anomaly and forecast models fit a repeating cycle. auto fits the
             cycles the training window supports.
           enum: [auto, off]
+        windowRule:
+          type: string
+          description: >-
+            How the evaluation window collapses to one verdict. at_all_times fires only
+            when every point breaches; at_least fires when minBreachPoints of them do;
+            on_average and in_total compare the window's mean or its sum against the
+            range, and are accepted on threshold monitors only. Omit it and the rule is
+            read from minBreachPoints, which is how a monitor saved before this field
+            existed is interpreted.
+          enum: [at_all_times, at_least, on_average, in_total]
         minBreachPoints:
           type: integer
           description: >-
-            How many points of the evaluation window must breach before the monitor fires.
-            Must not exceed numEvalPoints.
+            How many points of the evaluation window must breach before the monitor
+            fires. It belongs to windowRule at_least, and is ignored under every other
+            rule. A value at or above numEvalPoints is every point, and is stored as
+            at_all_times.
         trainingPeriod:
           type: number
           description: >-
