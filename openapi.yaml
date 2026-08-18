@@ -2623,9 +2623,11 @@ paths:
 
 
         The filter parameter narrows the same list with a tree of conditions. It names
-        incident.status, incident.priority and incident.assigned_user, and it answers any
-        other key with a condition no incident satisfies: an incident carries no
-        attributes of its own. The priority and assignee parameters name two of those
+        incident.status, incident.priority and incident.assigned_user. An incident carries
+        no attributes of its own, so it answers any other key as a statement about an
+        attribute no incident has: under = and exists no incident satisfies it, and under
+        != and not exists every incident does. The priority and assignee parameters name
+        two of those
         dimensions as well, so a request that sends both asks for the rows that satisfy
         all of it.
       tags: [Incidents]
@@ -5204,9 +5206,14 @@ components:
         is how a caller asks for the rows nobody owns: ownership is an assignment row, so
         an unowned row is an absence and not a value of the dimension. A dimension that
         every row carries, such as a status, refuses the pair. Each operation says which
-        keys it names, and folds its own repeated facet parameters into this tree with
-        and, so one request can send both. A filter this build cannot read, or one that
-        asks what it cannot answer, is refused with 400.
+        keys it names, how it answers a key it does not, and folds its own repeated facet
+        parameters into this tree with and, so one request can send both. These are
+        refused with 400: a tree this build cannot read, an operator it does not
+        implement, a value outside a closed vocabulary, and the presence pair over a
+        dimension every row carries. A key an operation does not name is not refused - it
+        is answered, and the operation says how. An id that names no row is dropped from
+        its condition rather than refused, so a link naming a user the project no longer
+        has still returns a list.
       schema:
         type: string
       example: '{"c":"and","n":[{"k":"incident.priority","o":"=","v":["high","medium"]}]}'
