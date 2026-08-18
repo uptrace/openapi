@@ -2371,7 +2371,11 @@ paths:
             type: string
         - name: attrs[status][]
           in: query
-          description: Filter by alert status. Can be repeated for multiple values.
+          description: >-
+            Filter by alert status. Can be repeated for multiple values. The spellings open
+            and closed are also accepted, for links written before the statuses were named
+            unresolved and resolved; each selects the status it became. They are read on the
+            way in only, so a served alert always carries one of the three below.
           schema:
             type: array
             items:
@@ -2623,9 +2627,11 @@ paths:
 
 
         The filter parameter narrows the same list with a tree of conditions. It names
-        incident.status, incident.priority and incident.assigned_user, and it answers any
-        other key with a condition no incident satisfies: an incident carries no
-        attributes of its own. The priority and assignee parameters name two of those
+        incident.status, incident.priority and incident.assigned_user. An incident carries
+        no attributes of its own, so it answers any other key as a statement about an
+        attribute no incident has: under = and exists no incident satisfies it, and under
+        != and not exists every incident does. The priority and assignee parameters name
+        two of those
         dimensions as well, so a request that sends both asks for the rows that satisfy
         all of it.
       tags: [Incidents]
@@ -2648,7 +2654,10 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, and the
             values are alternatives, so asking for two returns the incidents either of them
-            owns. A value that is not a user id names nobody and selects nothing. It holds
+            owns. The value none asks for the incidents nobody owns: it is the older
+            spelling of the not exists operator the filter parameter takes, and named beside
+            real user ids it widens the answer to both populations rather than narrowing it.
+            Any other value that is not a user id names nobody and selects nothing. It holds
             back no status of its own: a merged tombstone keeps the owners it had and is
             returned for them, and narrowing that is what the status filter is for.
           schema:
@@ -2845,7 +2854,10 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, and the
             values are alternatives, so asking for two returns the incidents either of them
-            owns. A value that is not a user id names nobody and selects nothing. It holds
+            owns. The value none asks for the incidents nobody owns: it is the older
+            spelling of the not exists operator the filter parameter takes, and named beside
+            real user ids it widens the answer to both populations rather than narrowing it.
+            Any other value that is not a user id names nobody and selects nothing. It holds
             back no status of its own: a merged tombstone keeps the owners it had and is
             returned for them, and narrowing that is what the status filter is for.
           schema:
@@ -2863,6 +2875,65 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CountsResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /internal/v1/incidents/{project_id}/recommendations:
+    get:
+      summary: List project recommendations
+      operationId: ListProjectRecommendations
+      description: >-
+        Page the project's recommendations across every incident, pending first and newest
+        first inside each half. Use it to find what a project owes a decision on in one
+        request: the per-incident list answers for a single episode, so finding work without
+        this means walking the incident list and opening every row whose pending tally is
+        non-zero. Each row names the incident it would change, resolved through incidentsById.
+      tags: [Incidents]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Page"
+        - name: status
+          in: query
+          required: false
+          description: >-
+            Keep only recommendations in these states. Repeatable, and an absent parameter
+            asks for every state.
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/RecommendationStatus" }
+      responses:
+        "200":
+          description: The project's recommendations.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recommendations, count]
+                properties:
+                  recommendations:
+                    type: array
+                    items: { $ref: "#/components/schemas/RecommendationSummary" }
+                  count:
+                    type: integer
+                    description: >-
+                      How many recommendations the request's own scope holds, which is what a
+                      pager reads. It respects the status filter, so asking for pending is how
+                      a caller learns how many the project owes a decision on.
+                  incidentsById:
+                    type: object
+                    description: >-
+                      Every incident the listed recommendations belong to, keyed by incident
+                      id. A proposal carries an incident id and nothing a caller can read, so
+                      this is what names them. An incident deleted since a proposal was filed
+                      is absent.
+                    additionalProperties: { $ref: "#/components/schemas/IncidentSummary" }
+                  usersById:
+                    type: object
+                    description: "Every user who decided one of the listed recommendations, keyed by user id."
+                    additionalProperties: { $ref: "#/components/schemas/PublicUser" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -5145,9 +5216,14 @@ components:
         is how a caller asks for the rows nobody owns: ownership is an assignment row, so
         an unowned row is an absence and not a value of the dimension. A dimension that
         every row carries, such as a status, refuses the pair. Each operation says which
-        keys it names, and folds its own repeated facet parameters into this tree with
-        and, so one request can send both. A filter this build cannot read, or one that
-        asks what it cannot answer, is refused with 400.
+        keys it names, how it answers a key it does not, and folds its own repeated facet
+        parameters into this tree with and, so one request can send both. These are
+        refused with 400: a tree this build cannot read, an operator it does not
+        implement, a value outside a closed vocabulary, the presence pair sent with
+        values, and the presence pair over a dimension every row carries. A key an operation does not name is not refused - it
+        is answered, and the operation says how. An id that names no row is dropped from
+        its condition rather than refused, so a link naming a user the project no longer
+        has still returns a list.
       schema:
         type: string
       example: '{"c":"and","n":[{"k":"incident.priority","o":"=","v":["high","medium"]}]}'
@@ -5758,10 +5834,32 @@ components:
             attachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             detachedAt: { type: number, format: double, description: "Unix timestamp (milliseconds)." }
             detachReason: { $ref: "#/components/schemas/IncidentAlertDetachReason" }
-            movedFromIncidentId: { type: integer, format: uint64 }
+            mergedFromIncidentId:
+              type: integer
+              format: uint64
+              description: >-
+                The incident whose merge released this alert onto this one, absent when it had
+                no prior active membership. A merge is the only writer: an attach over an alert
+                another incident holds is skipped rather than granted, so nothing else gives an
+                alert a new incident without a release first. It reads as the mirror of the
+                incident's own mergedIntoId, which says where the loser went.
+            decision: { $ref: "#/components/schemas/IncidentGroupingDecision" }
             claimedByIncidentId: { type: integer, format: uint64, description: "The incident that claims this alert now, served on a released membership alone. A reopen restores what the close freed apart from an alert another incident has since claimed, so this is what says which rows will not come back. Absent on a live membership, where this incident claims every member, and on a released row nothing has claimed." }
             suspected: { type: boolean, description: "This member is marked as one of the incident's causes." }
       required: [id, projectId, name, type]
+
+    IncidentGroupingDecision:
+      type: object
+      description: The automatic grouper's decision that attached an alert, kept so the grouping can be reviewed later.
+      properties:
+        action: { type: string, enum: [attach, create] }
+        alertIds: { type: array, items: { type: integer, format: uint64 } }
+        incidentId: { type: integer, format: uint64 }
+        title: { type: string }
+        confidence: { type: number, format: double }
+        reason: { type: string }
+        signal: { type: string, enum: [same_resource, same_service, shared_scope] }
+        evidenceAlertIds: { type: array, items: { type: integer, format: uint64 } }
 
     HypothesisSummary:
       type: object
