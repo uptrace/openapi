@@ -2371,7 +2371,11 @@ paths:
             type: string
         - name: attrs[status][]
           in: query
-          description: Filter by alert status. Can be repeated for multiple values.
+          description: >-
+            Filter by alert status. Can be repeated for multiple values. The spellings open
+            and closed are also accepted, for links written before the statuses were named
+            unresolved and resolved; each selects the status it became. They are read on the
+            way in only, so a served alert always carries one of the three below.
           schema:
             type: array
             items:
