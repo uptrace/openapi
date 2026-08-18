@@ -2650,7 +2650,10 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, and the
             values are alternatives, so asking for two returns the incidents either of them
-            owns. A value that is not a user id names nobody and selects nothing. It holds
+            owns. The value none asks for the incidents nobody owns: it is the older
+            spelling of the not exists operator the filter parameter takes, and named beside
+            real user ids it widens the answer to both populations rather than narrowing it.
+            Any other value that is not a user id names nobody and selects nothing. It holds
             back no status of its own: a merged tombstone keeps the owners it had and is
             returned for them, and narrowing that is what the status filter is for.
           schema:
@@ -2847,7 +2850,10 @@ paths:
           description: >-
             Filter by owner. Repeat for multiple values. Each value is a user id, and the
             values are alternatives, so asking for two returns the incidents either of them
-            owns. A value that is not a user id names nobody and selects nothing. It holds
+            owns. The value none asks for the incidents nobody owns: it is the older
+            spelling of the not exists operator the filter parameter takes, and named beside
+            real user ids it widens the answer to both populations rather than narrowing it.
+            Any other value that is not a user id names nobody and selects nothing. It holds
             back no status of its own: a merged tombstone keeps the owners it had and is
             returned for them, and narrowing that is what the status filter is for.
           schema:
